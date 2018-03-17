@@ -1,0 +1,1 @@
+# WonderWp Asset Component
