@@ -12,7 +12,7 @@ class DirectAssetEnqueuer extends AbstractAssetEnqueuer
     {
         parent::__construct();
 
-        $this->assetsManager = $this->container['wwp.assets.manager'];
+        $this->assetsManager = $this->container['wwp.asset.manager'];
         $this->assetsManager->callServices();
     }
 

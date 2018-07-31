@@ -11,22 +11,22 @@ class JsonAssetExporter extends AbstractAssetExporter
          * Get registered assets from manager
          */
         /** @var AssetManager $assetsManager */
-        $assetsManager = $this->container['wwp.assets.manager'];
+        $assetsManager = $this->container['wwp.asset.manager'];
         $assetsManager->callServices();
 
         /**
          * Prepare common and useful metas
          */
         $blogUrl      = get_bloginfo('url');
-        $assetsPrefix = $this->container['wwp.assets.folder.prefix'];
+        $assetsPrefix = $this->container['wwp.asset.folder.prefix'];
         $json         = [
             'site' => [
                 'id'          => get_current_blog_id(),
                 'title'       => get_bloginfo('name'),
                 'url'         => $blogUrl,
-                'assets_src'  => $this->container['wwp.assets.folder.src'],
-                'assets_dest' => $this->container['wwp.assets.folder.dest'],
-                'prefix'      => $this->container['wwp.assets.folder.prefix'],
+                'assets_src'  => $this->container['wwp.asset.folder.src'],
+                'assets_dest' => $this->container['wwp.asset.folder.dest'],
+                'prefix'      => $this->container['wwp.asset.folder.prefix'],
                 'env'         => WP_ENV,
             ],
             'css'  => [],
@@ -73,7 +73,7 @@ class JsonAssetExporter extends AbstractAssetExporter
          * Write manifest
          */
         /** @var \WP_Filesystem_Direct $filesystem */
-        $manifestPath = $this->container->offsetGet('wwp.assets.manifest.path');
+        $manifestPath = $this->container->offsetGet('wwp.asset.manifest.path');
         $filesystem   = $this->container->offsetGet('wwp.fileSystem');
         $written      = $filesystem->put_contents(
             $manifestPath,
