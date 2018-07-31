@@ -17,7 +17,8 @@
     ],
     "require": {
         "php": "~5.6|~7",
-        "wonderwp/logging": "dev-develop@dev"
+        "wonderwp/logging": "dev-develop@dev",
+        "wonderwp/service": "dev-develop@dev"
     },
     "autoload": {
         "psr-4": {"WonderWp\\Component\\Asset\\": "src"},
