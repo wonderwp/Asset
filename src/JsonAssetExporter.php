@@ -69,6 +69,8 @@ class JsonAssetExporter extends AbstractAssetExporter
         }
         $json['js'] = $jsFilesJSON;
 
+        $json  = apply_filters('jsonAssetsExporter.json',$json);
+
         /**
          * Write manifest
          */
