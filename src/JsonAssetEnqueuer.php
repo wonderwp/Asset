@@ -38,11 +38,21 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritdoc */
     public function enqueueScripts(array $groupNames)
     {
-        $versionNum = $this->getVersion();
+        $versionNum      = $this->getVersion();
+        $availableGroups = array_keys(get_object_vars($this->manifest->js));
+
         foreach ($groupNames as $group) {
-            $src = $this->blogUrl . str_replace($this->container['wwp.asset.folder.prefix'], '', $this->manifest->site->assets_dest) . '/js/' . $group  . $versionNum . '.js';
-            wp_enqueue_script($group, $src, [], null, true);
+            $dependencies = $this->computeDependencyArray($group, $availableGroups);
+            $src          = $this->blogUrl . str_replace($this->container['wwp.asset.folder.prefix'], '', $this->manifest->site->assets_dest) . '/js/' . $group . $versionNum . '.js';
+            wp_enqueue_script($group, $src, $dependencies, null, true);
         }
+    }
+
+    protected function computeDependencyArray($groupName, $availableGroups)
+    {
+        $dependencyArray = isset($this->manifest->jsDependencies->{$groupName}) ? $this->manifest->jsDependencies->{$groupName} : [];
+
+        return $dependencyArray;
     }
 
     /** @inheritdoc */

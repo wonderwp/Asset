@@ -58,9 +58,11 @@ class JsonAssetExporter extends AbstractAssetExporter
         $handlesJs      = array_keys($dependenciesJs);
         $jsFiles        = $assetsManager->getFlatDependencies($handlesJs, 'js');
 
-        $jsFilesJSON = [];
+        $jsFilesJSON         = [];
+        $jsGroupDependencies = [];
         foreach ($jsFiles as $groupName => $groupFiles) {
-            $jsFilesJSON[$groupName] = [];
+            $jsGroupDependencies[$groupName] = $assetsManager->getGroupDepencyGroups($groupName);
+            $jsFilesJSON[$groupName]         = [];
 
             foreach ($groupFiles as $js) {
                 $js->src                   = str_replace($blogUrl, '', $js->src);
@@ -68,8 +70,9 @@ class JsonAssetExporter extends AbstractAssetExporter
             }
         }
         $json['js'] = $jsFilesJSON;
+        $json['jsDependencies'] = $jsGroupDependencies;
 
-        $json  = apply_filters('jsonAssetsExporter.json',$json);
+        $json = apply_filters('jsonAssetsExporter.json', $json);
 
         /**
          * Write manifest
