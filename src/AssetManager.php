@@ -4,6 +4,7 @@ namespace WonderWp\Component\Asset;
 
 use WonderWp\Component\DependencyInjection\SingletonInterface;
 use WonderWp\Component\DependencyInjection\SingletonTrait;
+use function WonderWp\Functions\array_merge_recursive_distinct;
 
 class AssetManager implements SingletonInterface
 {
@@ -187,6 +188,7 @@ class AssetManager implements SingletonInterface
         $jsIndex     = $this->dependencies[$type];
         $fullQueue   = [];
         $groupsOrder = [];
+
         if (!empty($this->queue[$type])) {
             foreach ($this->queue[$type] as $i => $handle) {
                 /* @var $handle Asset */
@@ -266,7 +268,7 @@ class AssetManager implements SingletonInterface
      * @param string $group
      * @param string $type (js || css)
      *
-     * @return array $return
+     * @return Asset[] $return
      */
     public function getDependenciesFromGroup($group, $type = 'js')
     {
@@ -280,5 +282,38 @@ class AssetManager implements SingletonInterface
         }
 
         return $return;
+    }
+
+    public function getGroupDepencyGroups($group, $type = 'js')
+    {
+        $requiredDepsHandles = [];
+        $deps                = $this->getDependenciesFromGroup($group, $type);
+        if (!empty($deps)) {
+            foreach ($deps as $dep) {
+                $requiredDepsHandles = array_merge_recursive_distinct($requiredDepsHandles, $dep->deps);
+            }
+        }
+
+        $requiredGroups = $this->extractGroupDepsNamesFromDepsHandles($requiredDepsHandles, $group, $type);
+
+        return $requiredGroups;
+    }
+
+    public function extractGroupDepsNamesFromDepsHandles($depsHandles, $group, $type = 'js')
+    {
+        $requiredGroups = [];
+
+        if (!empty($depsHandles)) {
+            foreach ($depsHandles as $handle) {
+                if(isset($this->dependencies[$type][$handle])) {
+                    $dep = $this->dependencies[$type][$handle];
+                    if ($dep->concatGroup != $group) {
+                        $requiredGroups[$dep->concatGroup] = $dep->concatGroup;
+                    }
+                }
+            }
+        }
+
+        return array_keys($requiredGroups);
     }
 }
