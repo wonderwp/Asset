@@ -63,7 +63,7 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
             if (array_key_exists($group, $this->manifest->js)) {
                 $src = $_SERVER['DOCUMENT_ROOT'] . str_replace($this->container['wwp.asset.folder.prefix'], '', $this->manifest->site->assets_dest) . '/js/' . $group . $versionNum . '.js';
                 if (file_exists($src)) {
-                    $content = file_get_contents($src);
+                    $content = apply_filters('wwp.enqueur.critical.js.content', file_get_contents($src));
                     if (!empty($content)) {
                         echo '<script id="critical-js">
                                 ' . $content . '
@@ -75,7 +75,7 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
             if (array_key_exists($group, $this->manifest->css)) {
                 $src = $_SERVER['DOCUMENT_ROOT'] . str_replace($this->container['wwp.asset.folder.prefix'], '', $this->manifest->site->assets_dest) . '/css/' . $group . $versionNum . '.css';
                 if (file_exists($src) && !is_admin()) {
-                    $content = file_get_contents($src);
+                    $content = apply_filters('wwp.enqueur.critical.css.content', file_get_contents($src));
                     if (!empty($content)) {
                         echo '<style id="critical-css">
                                 ' . $content . '
