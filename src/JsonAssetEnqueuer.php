@@ -25,7 +25,7 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
             $protocol .= "s";
         }
         $protocol.=':';
-        $this->blogUrl  = apply_filters('wwp.enqueur.asset-url', $protocol.rtrim("//{$_SERVER['HTTP_HOST']}", '/'));
+        $this->blogUrl  = apply_filters('wwp.JsonAssetsEnqueur.blogUrl', $protocol.rtrim("//{$_SERVER['HTTP_HOST']}", '/'));
     }
 
     /** @inheritdoc */
