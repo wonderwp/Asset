@@ -20,7 +20,12 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
         parent::__construct();
 
         $this->manifest = json_decode(file_get_contents($manifestPath));
-        $this->blogUrl  = rtrim("//{$_SERVER['HTTP_HOST']}", '/');
+        $protocol = 'http';
+        if (!empty($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") {
+            $protocol .= "s";
+        }
+        $protocol.=':';
+        $this->blogUrl  = apply_filters('wwp.enqueur.asset-url', $protocol.rtrim("//{$_SERVER['HTTP_HOST']}", '/'));
     }
 
     /** @inheritdoc */
