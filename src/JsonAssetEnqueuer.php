@@ -44,7 +44,7 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     public function enqueueScripts(array $groupNames)
     {
         $versionNum      = $this->getVersion();
-        $availableGroups = array_keys(get_object_vars($this->manifest->js));
+        $availableGroups = !empty($this->manifest->js) ? array_keys(get_object_vars($this->manifest->js)) : [];
 
         foreach ($groupNames as $group) {
             $dependencies = $this->computeDependencyArray($group, $availableGroups);
