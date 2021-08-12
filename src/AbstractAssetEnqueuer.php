@@ -2,16 +2,12 @@
 
 namespace WonderWp\Component\Asset;
 
-use WonderWp\Component\DependencyInjection\Container;
-
 abstract class AbstractAssetEnqueuer implements AssetEnqueuerInterface
 {
-    /** @var Container */
-    protected $container;
-
+    public $assetManager;
     /** Constructor */
-    public function __construct()
+    public function __construct(AssetManager $assetManager)
     {
-        $this->container = Container::getInstance();
+        $this->assetManager = $assetManager;
     }
 }

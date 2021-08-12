@@ -4,6 +4,7 @@ namespace WonderWp\Component\Asset;
 
 class JsonAssetEnqueuer extends AbstractAssetEnqueuer
 {
+
     /** @var object */
     protected $manifest;
     /** @var string */
@@ -11,45 +12,75 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     /** @var int */
     protected $version;
     protected $assetsFolderPrefix;
+    protected $dest;
+    protected $prefix;
 
-    /**
-     * @param string $manifestPath
-     */
-    public function __construct($manifestPath)
+    public function __construct(AssetManager $assetManager, $manifestPath, $dest, $prefix)
     {
-        parent::__construct();
-
+        parent::__construct($assetManager);
+        $this->dest = $dest;
+        $this->prefix = $prefix;
         $this->manifest = json_decode(file_get_contents($manifestPath));
+
         $protocol = 'http';
         if (!empty($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") {
             $protocol .= "s";
         }
-        $protocol.=':';
-        $this->blogUrl  = apply_filters('wwp.JsonAssetsEnqueur.blogUrl', $protocol.rtrim("//{$_SERVER['HTTP_HOST']}", '/'));
+        $protocol .= ':';
+        $this->blogUrl = apply_filters('wwp.JsonAssetsEnqueur.blogUrl', $protocol . rtrim("//{$_SERVER['HTTP_HOST']}", '/'));
     }
 
     /** @inheritdoc */
-    public function enqueueStyles(array $groupNames)
+    public function enqueueStyleGroups(array $groupNames)
     {
-        $versionNum = $this->getVersion();
+        $this->enqueueStylesFn($groupNames);
+    }
+
+    /**
+     * @param array $groupNames
+     */
+    public function enqueueStylesFn(array $groupNames)
+    {
         foreach ($groupNames as $group) {
-            if (property_exists($this->manifest->css, $group)) {
-                $src = $this->blogUrl . str_replace($this->container['wwp.asset.folder.prefix'], '', $this->manifest->site->assets_dest) . '/css/' . $group . $versionNum . '.css';
-                wp_enqueue_style($group, $src, [], null);
+            if ($this->isPropertyExistInManifest('css', $group)) {
+                $src = $this->getUrlSrcFrom('css', $group);
+
+                $groupName = $this->getGroupNameBy($group);
+
+                wp_enqueue_style($groupName, $src, [], null);
             }
         }
     }
 
     /** @inheritdoc */
-    public function enqueueScripts(array $groupNames)
+    public function enqueueScriptGroups(array $groupNames)
     {
-        $versionNum      = $this->getVersion();
+        $this->enqueueScriptsFn($groupNames);
+    }
+
+    /**
+     * @param array $groupNames
+     */
+    public function enqueueScriptsFn(array $groupNames)
+    {
         $availableGroups = !empty($this->manifest->js) ? array_keys(get_object_vars($this->manifest->js)) : [];
 
         foreach ($groupNames as $group) {
+            // Note: we couldn't check for isPropertyExistInManifest
+            // because js vendor is not present but should be loaded
             $dependencies = $this->computeDependencyArray($group, $availableGroups);
-            $src          = $this->blogUrl . str_replace($this->container['wwp.asset.folder.prefix'], '', $this->manifest->site->assets_dest) . '/js/' . $group . $versionNum . '.js';
-            wp_enqueue_script($group, $src, $dependencies, null, true);
+
+            if ($group === 'vendor') {
+                $src = $this->getVendorUrl();
+            } else {
+                $src = $this->getUrlSrcFrom('js', $group);
+            }
+
+            $groupName = $this->getGroupNameBy($group);
+
+            if (!empty($src)) {
+                wp_enqueue_script($groupName, $src, $dependencies, null, true);
+            }
         }
     }
 
@@ -60,31 +91,42 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
         return $dependencyArray;
     }
 
-    /** @inheritdoc */
-    public function enqueueCritical(array $groupNames)
+    protected function getGroupNameBy(string $group)
     {
-        $versionNum = $this->getVersion();
+        return $group;
+    }
+
+    /** @inheritdoc */
+    public function enqueueCriticalGroups(array $handle)
+    {
+        $this->enqueueCriticalFn($handle);
+    }
+
+    protected function enqueueCriticalFn(array $groupNames)
+    {
         foreach ($groupNames as $group) {
-            if (property_exists($this->manifest->js, $group)) {
-                $src = $_SERVER['DOCUMENT_ROOT'] . str_replace($this->container['wwp.asset.folder.prefix'], '', $this->manifest->site->assets_dest) . '/js/' . $group . $versionNum . '.js';
+            if ($this->isPropertyExistInManifest('js', $group)) {
+                $src = $this->getPathSrcFrom('js', $group);
+
                 if (file_exists($src)) {
                     $content = apply_filters('wwp.enqueur.critical.js.content', file_get_contents($src));
                     if (!empty($content)) {
                         echo '<script id="critical-js">
-                                ' . $content . '
+                            ' . $content . '
                             </script>';
                     }
                 }
             }
 
-            if (property_exists($this->manifest->css,$group)) {
-                $src = $_SERVER['DOCUMENT_ROOT'] . str_replace($this->container['wwp.asset.folder.prefix'], '', $this->manifest->site->assets_dest) . '/css/' . $group . $versionNum . '.css';
+            if ($this->isPropertyExistInManifest('css', $group)) {
+                $src = $this->getPathSrcFrom('css', $group);
+
                 if (file_exists($src) && !is_admin()) {
                     $content = apply_filters('wwp.enqueur.critical.css.content', file_get_contents($src));
                     if (!empty($content)) {
                         echo '<style id="critical-css">
-                                ' . $content . '
-                            </style>';
+                        ' . $content . '
+                        </style>';
                     }
                 }
             }
@@ -97,10 +139,95 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     public function getVersion()
     {
         if ($this->version === null) {
-            $fileVersion   = $_SERVER['DOCUMENT_ROOT'] . $this->container['wwp.asset.folder.dest'] . '/version.php';
+            $fileVersion = $_SERVER['DOCUMENT_ROOT'] . $this->dest . '/version.php';
             $this->version = file_exists($fileVersion) ? include($fileVersion) : null;
         }
 
         return $this->version;
+    }
+
+    /**
+     * @param string $type
+     * @param string $group
+     * @return bool
+     */
+    protected function isPropertyExistInManifest(string $type, string $group)
+    {
+        return property_exists($this->manifest->{$type}, $group);
+    }
+
+    /**
+     * @param string $type
+     * @param string $group
+     * @return string
+     */
+    protected function getUrlSrcFrom(string $type, string $group)
+    {
+        return $this->addBlogUrlTo($this->getSrcFrom($type, $group));
+    }
+
+    /**
+     * @param string $type
+     * @param string $group
+     * @return string
+     */
+    protected function getPathSrcFrom(string $type, string $group)
+    {
+        return $this->addDocumentRootTo($this->getSrcFrom($type, $group));
+    }
+
+    /**
+     * @param string $type
+     * @param string $group
+     * @return string
+     */
+    protected function getSrcFrom(string $type, string $group)
+    {
+        $asset = $this->manifest->site->assets_dest . '/' . $type . '/' . $group . $this->getVersion() . '.' . $type;
+
+        return $asset;
+    }
+
+    /**
+     * @param string $path
+     * @return string
+     */
+    protected function addBlogUrlTo(string $path)
+    {
+        return $this->blogUrl . str_replace($this->prefix, '', $path);
+    }
+
+    /**
+     * @param string $path
+     * @return string
+     */
+    protected function addDocumentRootTo(string $path)
+    {
+        return $_SERVER['DOCUMENT_ROOT'] . str_replace($this->prefix, '', $path);
+    }
+
+    /**
+     * @return string
+     */
+    protected function getVendorUrl()
+    {
+        $asset = str_replace($this->prefix, '', $this->manifest->site->assets_dest . '/js/vendor' . $this->getVersion() . '.js');
+
+        return $this->addBlogUrlTo(DIRECTORY_SEPARATOR . $asset);
+    }
+
+    public function enqueueStyle(string $handle)
+    {
+        // TODO: Implement enqueueStyle() method.
+    }
+
+    public function enqueueScript(string $handle)
+    {
+        // TODO: Implement enqueueScript() method.
+    }
+
+    public function enqueueCritical(string $handle)
+    {
+        // TODO: Implement enqueueCritical() method.
     }
 }
