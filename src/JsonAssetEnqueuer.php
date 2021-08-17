@@ -4,8 +4,6 @@ namespace WonderWp\Component\Asset;
 
 class JsonAssetEnqueuer extends AbstractAssetEnqueuer
 {
-    const BUILD_TYPE_LEGACY = 'legacy';
-    const BUILD_TYPE_MODERN = 'modern';
 
     /** @var object */
     protected $manifest;
@@ -14,21 +12,14 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     /** @var int */
     protected $version;
     protected $assetsFolderPrefix;
-    /** @var object[] */
-    protected $entrypointsFiles = [];
-    /** @var object[] */
-    protected $versionFiles = [];
 
     /**
      * @param string $manifestPath
-     * @param string $distPath
      */
     public function __construct(string $manifestPath)
     {
         parent::__construct();
-
         $this->manifest = json_decode(file_get_contents($manifestPath));
-        $this->checkIfShouldBeUsingDifferencialServing($this->getDistPath());
 
         $protocol = 'http';
         if (!empty($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") {
@@ -38,21 +29,16 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
         $this->blogUrl = apply_filters('wwp.JsonAssetsEnqueur.blogUrl', $protocol . rtrim("//{$_SERVER['HTTP_HOST']}", '/'));
     }
 
-    private function getDistPath()
-    {
-        return $_SERVER['DOCUMENT_ROOT'] . $this->container['wwp.asset.folder.dest'];
-    }
-
     /** @inheritdoc */
     public function enqueueStyles(array $groupNames)
     {
-        if ($this->shouldUseDifferencialServing()) {
-            $this->enqueueStylesFn($groupNames, self::BUILD_TYPE_LEGACY);
-        } else {
-            $this->enqueueStylesFn($groupNames);
-        }
+        $this->enqueueStylesFn($groupNames);
     }
 
+    /**
+     * @param array $groupNames
+     * @param null|string $buildType
+     */
     public function enqueueStylesFn(array $groupNames, $buildType = null)
     {
         foreach ($groupNames as $group) {
@@ -69,15 +55,13 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritdoc */
     public function enqueueScripts(array $groupNames)
     {
-        if ($this->shouldUseDifferencialServing()) {
-            $this->enqueueScriptsFn($groupNames, self::BUILD_TYPE_LEGACY);
-            $this->enqueueScriptsFn($groupNames, self::BUILD_TYPE_MODERN);
-        } else {
-            $this->enqueueScriptsFn($groupNames);
-        }
+        $this->enqueueScriptsFn($groupNames);
     }
 
-    /** @inheritdoc */
+    /**
+     * @param array $groupNames
+     * @param null|string $buildType
+     */
     public function enqueueScriptsFn(array $groupNames, $buildType = null)
     {
         $availableGroups = !empty($this->manifest->js) ? array_keys(get_object_vars($this->manifest->js)) : [];
@@ -105,35 +89,21 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     {
         $dependencyArray = isset($this->manifest->jsDependencies->{$groupName}) ? $this->manifest->jsDependencies->{$groupName} : [];
 
-        if ($buildType !== null) {
-            $dependencyArray = array_map(function ($dependency) use ($buildType) {
-                return $this->getGroupNameBy($dependency, $buildType);
-            }, $dependencyArray);
-        }
-
         return $dependencyArray;
     }
 
-    private function getGroupNameBy(string $group, $buildType)
+    protected function getGroupNameBy(string $group, $buildType)
     {
-        if ($buildType !== null) {
-            return $group . '_wwp_' . $buildType;
-        }
-
         return $group;
     }
 
     /** @inheritdoc */
     public function enqueueCritical(array $groupNames)
     {
-        if ($this->shouldUseDifferencialServing()) {
-            $this->enqueueCriticalFn($groupNames, self::BUILD_TYPE_LEGACY);
-        } else {
-            $this->enqueueCriticalFn($groupNames, self::BUILD_TYPE_MODERN);
-        }
+        $this->enqueueCriticalFn($groupNames);
     }
 
-    private function enqueueCriticalFn(array $groupNames, string $buildType = null)
+    protected function enqueueCriticalFn(array $groupNames, string $buildType = null)
     {
         foreach ($groupNames as $group) {
             if ($this->isPropertyExistInManifest('js', $group, $buildType)) {
@@ -178,56 +148,13 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     }
 
     /**
-     * @param string $distPath
-     */
-    private function checkIfShouldBeUsingDifferencialServing(string $distPath)
-    {
-        if (is_dir($this->getPathByBuildType($distPath, self::BUILD_TYPE_LEGACY))
-            && is_dir($this->getPathByBuildType($distPath, self::BUILD_TYPE_MODERN))) {
-            $this->initEntrypointsFileBy($distPath, self::BUILD_TYPE_LEGACY);
-            $this->initEntrypointsFileBy($distPath, self::BUILD_TYPE_MODERN);
-        }
-    }
-
-    /**
-     * @param string $distPath
-     * @param string $envType
-     */
-    private function initEntrypointsFileBy(string $distPath, string $envType)
-    {
-        $dir = $this->getPathByBuildType($distPath, $envType);
-        $entrypointsFile = $dir . DIRECTORY_SEPARATOR . 'entrypoints.json';
-        $versionFile = $dir . DIRECTORY_SEPARATOR . 'manifest.json';
-
-        if (file_exists($entrypointsFile) && file_exists($versionFile)) {
-            $this->entrypointsFiles[$envType] = json_decode(file_get_contents($entrypointsFile));
-            $this->versionFiles[$envType] = json_decode(file_get_contents($versionFile));
-        }
-    }
-
-    /**
-     * @param string $distPath
-     * @param string $type
-     * @return string
-     */
-    private function getPathByBuildType(string $distPath, string $type)
-    {
-        return $distPath . DIRECTORY_SEPARATOR . $type;
-    }
-
-    /**
      * @param string $type
      * @param string $group
      * @param string|null $buildType
      * @return bool
      */
-    private function isPropertyExistInManifest(string $type, string $group, $buildType)
+    protected function isPropertyExistInManifest(string $type, string $group, $buildType)
     {
-        if ($this->shouldUseDifferencialServing() && $buildType !== null) {
-            $groupName = $type . '/' . $group;
-            return property_exists($this->entrypointsFiles[$buildType]->entrypoints, $groupName);
-        }
-
         return property_exists($this->manifest->{$type}, $group);
     }
 
@@ -237,7 +164,7 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
      * @param string|null $buildType
      * @return string
      */
-    private function getUrlSrcFrom(string $type, string $group, $buildType)
+    protected function getUrlSrcFrom(string $type, string $group, $buildType)
     {
         return $this->addBlogUrlTo($this->getSrcFrom($type, $group, $buildType));
     }
@@ -248,7 +175,7 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
      * @param string|null $buildType
      * @return string
      */
-    private function getPathSrcFrom(string $type, string $group, $buildType)
+    protected function getPathSrcFrom(string $type, string $group, $buildType)
     {
         return $this->addDocumentRootTo($this->getSrcFrom($type, $group, $buildType));
     }
@@ -259,38 +186,18 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
      * @param string|null $buildType
      * @return string
      */
-    private function getSrcFrom(string $type, string $group, $buildType)
+    protected function getSrcFrom(string $type, string $group, $buildType)
     {
         $asset = $this->manifest->site->assets_dest . '/' . $type . '/' . $group . $this->getVersion() . '.' . $type;
 
-        if ($this->shouldUseDifferencialServing() && $buildType !== null) {
-            $groupName = $type . '/' . $group;
-
-            if (property_exists($this->entrypointsFiles[$buildType]->entrypoints, $groupName)
-                && !empty($this->entrypointsFiles[$buildType]->entrypoints->{$groupName}->{$type})) {
-                $assets = $this->entrypointsFiles[$buildType]->entrypoints->{$groupName}->{$type};
-
-                // Note: take the last cause of webpack dependencies sorting
-                return end($assets);
-            }
-        }
-
         return $asset;
-    }
-
-    /**
-     * @return bool
-     */
-    private function shouldUseDifferencialServing()
-    {
-        return !empty($this->entrypointsFiles);
     }
 
     /**
      * @param string $path
      * @return string
      */
-    private function addBlogUrlTo(string $path)
+    protected function addBlogUrlTo(string $path)
     {
         return $this->blogUrl . str_replace($this->container['wwp.asset.folder.prefix'], '', $path);
     }
@@ -299,7 +206,7 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
      * @param string $path
      * @return string
      */
-    private function addDocumentRootTo(string $path)
+    protected function addDocumentRootTo(string $path)
     {
         return $_SERVER['DOCUMENT_ROOT'] . str_replace($this->container['wwp.asset.folder.prefix'], '', $path);
     }
@@ -308,19 +215,9 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
      * @param string|null $buildType
      * @return string
      */
-    private function getVendorUrl($buildType)
+    protected function getVendorUrl($buildType)
     {
         $asset = str_replace($this->container['wwp.asset.folder.prefix'], '', $this->manifest->site->assets_dest . '/js/vendor' . $this->getVersion() . '.js');
-
-        if ($buildType !== null && $this->shouldUseDifferencialServing()) {
-
-            $asset = str_replace($this->container['wwp.asset.folder.prefix'], '', $this->manifest->site->assets_dest . '/' . $buildType . '/js/vendor.js');
-            $asset = substr($asset, 1);
-
-            if (property_exists($this->versionFiles[$buildType], $asset)) {
-                return $this->addBlogUrlTo($this->versionFiles[$buildType]->{$asset});
-            }
-        }
 
         return $this->addBlogUrlTo(DIRECTORY_SEPARATOR . $asset);
     }
