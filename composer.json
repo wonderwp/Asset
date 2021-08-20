@@ -1,30 +1,30 @@
 {
-    "name": "wonderwp/asset",
-    "type": "library",
-    "description": "WonderWp Asset Component",
-    "keywords": ["log"],
-    "homepage": "https://wonderwp.com",
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "Jeremy Desvaux",
-            "homepage": "http://jdmweb.com"
-        },
-        {
-            "name": "WonderWp Community",
-            "homepage": "https://wonderwp.com/contributors"
-        }
-    ],
-    "require": {
-        "php": "~5.6|~7",
-        "wonderwp/logging": "^1.0",
-        "wonderwp/service": "^1.0"
+  "name": "wonderwp/asset",
+  "description": "WonderWp Asset Component",
+  "type": "library",
+  "keywords": ["asset", "WonderWp", "WordPress"],
+  "homepage": "https://github.com/wonderwp/Asset",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Jeremy Desvaux",
+      "homepage": "https://jdmweb.com"
     },
-    "autoload": {
-        "psr-4": {"WonderWp\\Component\\Asset\\": "src"},
-        "exclude-from-classmap": [
-            "/tests/"
-        ]
-    },
-    "minimum-stability": "dev"
+    {
+      "name": "WonderWp Community",
+      "homepage": "http://wonderwp.net/Contribution/Contributors.html"
+    }
+  ],
+  "require": {
+    "php": ">=7.1",
+    "wonderwp/logging": "^1.0",
+    "wonderwp/service": "^1.0"
+  },
+  "autoload": {
+    "psr-4": {"WonderWp\\Component\\Asset\\": "src"},
+    "exclude-from-classmap": [
+      "/tests/"
+    ]
+  },
+  "minimum-stability": "dev"
 }
