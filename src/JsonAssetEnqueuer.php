@@ -28,107 +28,89 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
         }
         $protocol .= ':';
         $this->blogUrl = apply_filters('wwp.JsonAssetsEnqueur.blogUrl', $protocol . rtrim("//{$_SERVER['HTTP_HOST']}", '/'));
+
+        $this->register();
     }
 
-    /** @inheritdoc */
-    public function enqueueStyleGroups(array $groupNames)
+    private function register()
     {
-        $this->enqueueStylesFn($groupNames);
-    }
-
-    /**
-     * @param array $groupNames
-     */
-    public function enqueueStylesFn(array $groupNames)
-    {
-        foreach ($groupNames as $group) {
-            if ($this->isPropertyExistInManifest('css', $group)) {
-                $src = $this->getUrlSrcFrom('css', $group);
-
-                $groupName = $this->getGroupNameBy($group);
-
-                wp_enqueue_style($groupName, $src, [], null);
-            }
-        }
-    }
-
-    /** @inheritdoc */
-    public function enqueueScriptGroups(array $groupNames)
-    {
-        $this->enqueueScriptsFn($groupNames);
-    }
-
-    /**
-     * @param array $groupNames
-     */
-    public function enqueueScriptsFn(array $groupNames)
-    {
-        $availableGroups = !empty($this->manifest->js) ? array_keys(get_object_vars($this->manifest->js)) : [];
-
-        foreach ($groupNames as $group) {
-            // Note: we couldn't check for isPropertyExistInManifest
-            // because js vendor is not present but should be loaded
-            $dependencies = $this->computeDependencyArray($group, $availableGroups);
-
-            if ($group === 'vendor') {
-                $src = $this->getVendorUrl();
-            } else {
-                $src = $this->getUrlSrcFrom('js', $group);
-            }
-
-            $groupName = $this->getGroupNameBy($group);
+        foreach ($this->manifest->css as $group => $styles) {
+            $src = $this->getUrlSrcFrom('css', $group);
 
             if (!empty($src)) {
-                wp_enqueue_script($groupName, $src, $dependencies, null, true);
+                wp_register_style($group, $src, [], null);
+            }
+        }
+
+        $src = $this->getVendorUrl();
+        $dependencies = $this->computeDependencyArray('vendor');
+        if (!empty($src)) {
+            wp_register_script('vendor', $src, $dependencies, null, true);
+        }
+
+        foreach ($this->manifest->js as $group => $scripts) {
+            $dependencies = $this->computeDependencyArray($group);
+
+            $src = $this->getUrlSrcFrom('js', $group);
+
+            if (!empty($src)) {
+                wp_register_script($group, $src, $dependencies, null, true);
             }
         }
     }
 
-    protected function computeDependencyArray($groupName, $availableGroups)
+    protected function computeDependencyArray($groupName)
     {
         $dependencyArray = isset($this->manifest->jsDependencies->{$groupName}) ? $this->manifest->jsDependencies->{$groupName} : [];
 
         return $dependencyArray;
     }
 
-    protected function getGroupNameBy(string $group)
-    {
-        return $group;
-    }
-
     /** @inheritdoc */
-    public function enqueueCriticalGroups(array $handle)
-    {
-        $this->enqueueCriticalFn($handle);
-    }
-
-    protected function enqueueCriticalFn(array $groupNames)
+    public function enqueueStyleGroups(array $groupNames)
     {
         foreach ($groupNames as $group) {
-            if ($this->isPropertyExistInManifest('js', $group)) {
-                $src = $this->getPathSrcFrom('js', $group);
+            $this->enqueueStyle($group);
+        }
+    }
 
-                if (file_exists($src)) {
-                    $content = apply_filters('wwp.enqueur.critical.js.content', file_get_contents($src));
-                    if (!empty($content)) {
-                        echo '<script id="critical-js">
-                            ' . $content . '
-                            </script>';
-                    }
-                }
+
+    /** @inheritdoc */
+    public function enqueueScriptGroups(array $groupNames)
+    {
+        foreach ($groupNames as $group) {
+            $this->enqueueScript($group);
+        }
+    }
+
+    public function enqueueStyle(string $handle)
+    {
+        wp_enqueue_style($handle);
+    }
+
+    public function enqueueScript(string $handle)
+    {
+        wp_enqueue_script($handle);
+    }
+
+    public function inlineStyle(string $handle)
+    {
+        if ($this->isPropertyExistInManifest('js', $handle)) {
+            $src = $this->getPathSrcFrom('js', $handle);
+
+            if (file_exists($src)) {
+                return apply_filters('wwp.enqueur.critical.js.content', file_get_contents($src));
             }
+        }
+    }
 
-            if ($this->isPropertyExistInManifest('css', $group)) {
-                $src = $this->getPathSrcFrom('css', $group);
+    public function inlineScript(string $handle)
+    {
+        if ($this->isPropertyExistInManifest('css', $handle)) {
+            $src = $this->getPathSrcFrom('css', $handle);
 
-                if (file_exists($src) && !is_admin()) {
-                    $content = apply_filters('wwp.enqueur.critical.css.content', file_get_contents($src));
-                    if (!empty($content)) {
-                        echo '<style id="critical-css">
-                        ' . $content . '
-                        </style>';
-                    }
-                }
+            if (file_exists($src) && !is_admin()) {
+                return apply_filters('wwp.enqueur.critical.css.content', file_get_contents($src));
             }
         }
     }
@@ -214,20 +196,5 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
         $asset = str_replace($this->prefix, '', $this->manifest->site->assets_dest . '/js/vendor' . $this->getVersion() . '.js');
 
         return $this->addBlogUrlTo(DIRECTORY_SEPARATOR . $asset);
-    }
-
-    public function enqueueStyle(string $handle)
-    {
-        // TODO: Implement enqueueStyle() method.
-    }
-
-    public function enqueueScript(string $handle)
-    {
-        // TODO: Implement enqueueScript() method.
-    }
-
-    public function enqueueCritical(string $handle)
-    {
-        // TODO: Implement enqueueCritical() method.
     }
 }

@@ -15,11 +15,6 @@ interface AssetEnqueuerInterface
     public function enqueueScriptGroups(array $groupNames);
 
     /**
-     * @param array $groupNames
-     */
-    public function enqueueCriticalGroups(array $groupNames);
-
-    /**
      * @param string $handle
      */
     public function enqueueStyle(string $handle);
@@ -32,5 +27,10 @@ interface AssetEnqueuerInterface
     /**
      * @param string $handle
      */
-    public function enqueueCritical(string $handle);
+    public function inlineStyle(string $handle);
+
+    /**
+     * @param string $handle
+     */
+    public function inlineScript(string $handle);
 }

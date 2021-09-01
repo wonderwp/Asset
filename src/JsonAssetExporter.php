@@ -75,7 +75,6 @@ class JsonAssetExporter extends AbstractAssetExporter
                     $jsFilesJSON[$groupName][] = $assetsPrefix . $js->src;
                 } else {
                     $jsFilesJSON[$groupName][$js->handle] = $assetsPrefix . $js->src;
-
                 }
             }
         }
