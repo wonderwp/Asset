@@ -11,9 +11,11 @@ class PackageAssetEnqueur implements AssetEnqueuerInterface
      */
     private $packages;
     private $blogUrl;
+    private $entryPath;
 
-    public function __construct($packages)
+    public function __construct($packages, $entryPath)
     {
+        $this->entryPath = $entryPath;
         $this->initBlogUrl();
 
         $this->initPackages($packages);
@@ -80,8 +82,8 @@ class PackageAssetEnqueur implements AssetEnqueuerInterface
     {
         foreach ($groupNames as $group) {
             foreach ($this->packages->getPackagesBy('critical') as $package) {
-                $src = $package->getUrl('js/' . $group . '.js');
-
+                $path = $package->getFullPath('js/' . $group . '.js');
+                $src = $this->entryPath . DIRECTORY_SEPARATOR . $path;
                 if (file_exists($src)) {
                     $content = apply_filters('wwp.enqueur.critical.js.content', file_get_contents($src));
                     if (!empty($content)) {
@@ -93,7 +95,8 @@ class PackageAssetEnqueur implements AssetEnqueuerInterface
             }
 
             foreach ($this->packages->getPackagesBy('critical') as $package) {
-                $src = $package->getUrl('css/' . $group . '.css');
+                $path = $package->getFullPath('css/' . $group . '.css');
+                $src = $this->entryPath . DIRECTORY_SEPARATOR . $path;
 
                 if (file_exists($src) && !is_admin()) {
                     $content = apply_filters('wwp.enqueur.critical.css.content', file_get_contents($src));

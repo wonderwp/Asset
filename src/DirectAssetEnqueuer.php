@@ -4,48 +4,78 @@ namespace WonderWp\Component\Asset;
 
 class DirectAssetEnqueuer extends AbstractAssetEnqueuer
 {
-    /** @var AssetManager */
-    protected $assetsManager;
 
     /** @inheritdoc */
-    public function __construct(AssetManager $assetsManager)
+    public function __construct(AssetManager $assetManager)
     {
-        parent::__construct($assetsManager);
 
-        $this->assetsManager->callServices();
+        parent::__construct($assetManager);
+
+        $this->assetManager->callServices();
+        $this->register();
     }
 
     /** @inheritdoc */
     public function enqueueStyleGroups(array $groupNames)
     {
-        $toRender = $this->assetsManager->getDependencies('css');
+        $toRender = $this->assetManager->getDependencies('css');
 
         foreach ($toRender as $dep) {
             /* @var $dep Asset */
             if (in_array($dep->concatGroup, $groupNames)) {
-                wp_enqueue_style($dep->handle, $dep->src, $dep->deps, $dep->ver);
+                wp_enqueue_style($dep->handle);
             }
         }
     }
 
     /** @inheritdoc */
-    public function enqueueScriptGroups(array $groupNames) { }
+    public function enqueueScriptGroups(array $groupNames)
+    {
+        $toRender = $this->assetManager->getDependencies('js');
+
+        foreach ($toRender as $dep) {
+            /* @var $dep Asset */
+            if (in_array($dep->concatGroup, $groupNames)) {
+                wp_enqueue_script($dep->handle);
+            }
+        }
+    }
 
     /** @inheritdoc */
-    public function enqueueCriticalGroups(array $groupNames) { }
+    public function enqueueCriticalGroups(array $groupNames)
+    {
+
+    }
 
     public function enqueueStyle(string $handle)
     {
-        // TODO: Implement enqueueStyle() method.
+        wp_enqueue_style($handle);
     }
 
     public function enqueueScript(string $handle)
     {
-        // TODO: Implement enqueueScript() method.
+        wp_enqueue_script($handle);
     }
 
     public function enqueueCritical(string $handle)
     {
-        // TODO: Implement enqueueCritical() method.
+
+    }
+
+    private function register()
+    {
+        $toRender = $this->assetManager->getDependencies('css');
+
+        foreach ($toRender as $dep) {
+            /* @var $dep Asset */
+            wp_register_style($dep->handle, $dep->src, $dep->deps, $dep->ver);
+        }
+
+        $toRender = $this->assetManager->getDependencies('js');
+
+        foreach ($toRender as $dep) {
+            /* @var $dep Asset */
+            wp_register_script($dep->handle, $dep->src, $dep->deps, $dep->ver);
+        }
     }
 }

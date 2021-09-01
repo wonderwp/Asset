@@ -86,6 +86,18 @@ class AssetPackage extends Package
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function getFullPath(string $path): string
+    {
+        if ($this->isAbsoluteUrl($path)) {
+            return $path;
+        }
+
+        return $this->getVersionStrategy()->applyVersion($this->getBasePath() . $path);
+    }
+
+    /**
      * Returns the base URL
      *
      * @return string The base URL
