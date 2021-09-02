@@ -11,23 +11,34 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     protected $blogUrl;
     /** @var int */
     protected $version;
-    protected $assetsFolderPrefix;
     protected $dest;
     protected $prefix;
+    /**
+     * @var WordpressAssetGateway
+     */
+    private $wordpressAssetGateway;
 
-    public function __construct(AssetManager $assetManager, $manifestPath, $dest, $prefix)
+    public function __construct(AssetManager $assetManager, $manifestPath, $dest, $prefix, WordpressAssetGateway $wordpressAssetGateway = null)
     {
         parent::__construct($assetManager);
         $this->dest = $dest;
         $this->prefix = $prefix;
         $this->manifest = json_decode(file_get_contents($manifestPath));
 
+        if ($wordpressAssetGateway === null) {
+            $this->wordpressAssetGateway = new WordpressAssetGateway();
+        } else {
+            $this->wordpressAssetGateway = $wordpressAssetGateway;
+        }
+
         $protocol = 'http';
         if (!empty($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") {
             $protocol .= "s";
         }
         $protocol .= ':';
-        $this->blogUrl = apply_filters('wwp.JsonAssetsEnqueur.blogUrl', $protocol . rtrim("//{$_SERVER['HTTP_HOST']}", '/'));
+        $this->blogUrl = $this->wordpressAssetGateway->applyFilters('wwp.JsonAssetsEnqueur.blogUrl', $protocol . rtrim("//{$_SERVER['HTTP_HOST']}", '/'));
+
+
 
         $this->register();
     }
@@ -38,14 +49,14 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
             $src = $this->getUrlSrcFrom('css', $group);
 
             if (!empty($src)) {
-                wp_register_style($group, $src, [], null);
+                $this->wordpressAssetGateway->registerStyle($group, $src, [], null);
             }
         }
 
         $src = $this->getVendorUrl();
         $dependencies = $this->computeDependencyArray('vendor');
         if (!empty($src)) {
-            wp_register_script('vendor', $src, $dependencies, null, true);
+            $this->wordpressAssetGateway->registerScript('vendor', $src, $dependencies, null, true);
         }
 
         foreach ($this->manifest->js as $group => $scripts) {
@@ -54,7 +65,7 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
             $src = $this->getUrlSrcFrom('js', $group);
 
             if (!empty($src)) {
-                wp_register_script($group, $src, $dependencies, null, true);
+                $this->wordpressAssetGateway->registerScript($group, $src, $dependencies, null, true);
             }
         }
     }
@@ -85,32 +96,32 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
 
     public function enqueueStyle(string $handle)
     {
-        wp_enqueue_style($handle);
+        $this->wordpressAssetGateway->enqueueStyle($handle);
     }
 
     public function enqueueScript(string $handle)
     {
-        wp_enqueue_script($handle);
+        $this->wordpressAssetGateway->enqueueScript($handle);
     }
 
     public function inlineStyle(string $handle)
     {
-        if ($this->isPropertyExistInManifest('js', $handle)) {
-            $src = $this->getPathSrcFrom('js', $handle);
+        if ($this->isPropertyExistInManifest('css', $handle)) {
+            $src = $this->getPathSrcFrom('css', $handle);
 
             if (file_exists($src)) {
-                return apply_filters('wwp.enqueur.critical.js.content', file_get_contents($src));
+                return  $this->wordpressAssetGateway->applyFilters('wwp.enqueur.critical.js.content', file_get_contents($src));
             }
         }
     }
 
     public function inlineScript(string $handle)
     {
-        if ($this->isPropertyExistInManifest('css', $handle)) {
-            $src = $this->getPathSrcFrom('css', $handle);
+        if ($this->isPropertyExistInManifest('js', $handle)) {
+            $src = $this->getPathSrcFrom('js', $handle);
 
-            if (file_exists($src) && !is_admin()) {
-                return apply_filters('wwp.enqueur.critical.css.content', file_get_contents($src));
+            if (file_exists($src) && !$this->wordpressAssetGateway->isAdmin()) {
+                return  $this->wordpressAssetGateway->applyFilters('wwp.enqueur.critical.css.content', file_get_contents($src));
             }
         }
     }
@@ -195,6 +206,6 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     {
         $asset = str_replace($this->prefix, '', $this->manifest->site->assets_dest . '/js/vendor' . $this->getVersion() . '.js');
 
-        return $this->addBlogUrlTo(DIRECTORY_SEPARATOR . $asset);
+        return $this->addBlogUrlTo($asset);
     }
 }

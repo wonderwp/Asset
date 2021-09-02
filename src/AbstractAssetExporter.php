@@ -14,16 +14,11 @@ abstract class AbstractAssetExporter implements AssetExporterInterface
     /** @var DirectOutputLogger */
     protected $logger;
 
-    protected $args;
-    protected $assoc_args;
-
 
     /** @inheritdoc */
-    public function __invoke($args, $assoc_args)
+    public function __invoke($args)
     {
         $this->container = Container::getInstance();
-        $this->args = $args;
-        $this->assoc_args = $assoc_args;
         $this->export();
     }
 

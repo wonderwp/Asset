@@ -5,15 +5,23 @@ namespace WonderWp\Component\Asset;
 class DirectAssetEnqueuer extends AbstractAssetEnqueuer
 {
     private $publicPath;
+    /**
+     * @var WordpressAssetGateway
+     */
+    private $wordpressAssetGateway;
 
     /** @inheritdoc */
-    public function __construct(AssetManager $assetManager, $publicPath)
+    public function __construct(AssetManager $assetManager, $publicPath, WordpressAssetGateway $wordpressAssetGateway = null)
     {
-
         parent::__construct($assetManager);
 
         $this->assetManager->callServices();
         $this->publicPath = $publicPath;
+        if ($wordpressAssetGateway === null) {
+            $this->wordpressAssetGateway = new WordpressAssetGateway();
+        } else {
+            $this->wordpressAssetGateway = $wordpressAssetGateway;
+        }
         $this->register();
     }
 
@@ -23,7 +31,7 @@ class DirectAssetEnqueuer extends AbstractAssetEnqueuer
 
         foreach ($toRender as $dep) {
             /* @var $dep Asset */
-            wp_register_style($dep->handle, $dep->src, $dep->deps, $dep->ver);
+            $this->wordpressAssetGateway->registerStyle($dep->handle, $dep->src, $dep->deps, $dep->ver);
         }
 
 
@@ -31,7 +39,7 @@ class DirectAssetEnqueuer extends AbstractAssetEnqueuer
 
         foreach ($toRender as $dep) {
             /* @var $dep Asset */
-            wp_register_script($dep->handle, $dep->src, $dep->deps, $dep->ver);
+            $this->wordpressAssetGateway->registerScript($dep->handle, $dep->src, $dep->deps, $dep->ver);
         }
     }
 
@@ -63,31 +71,32 @@ class DirectAssetEnqueuer extends AbstractAssetEnqueuer
 
     public function enqueueStyle(string $handle)
     {
-        wp_enqueue_style($handle);
+        $this->wordpressAssetGateway->enqueueStyle($handle);
     }
 
     public function enqueueScript(string $handle)
     {
-        wp_enqueue_script($handle);
+        $this->wordpressAssetGateway->enqueueScript($handle);
     }
 
     public function inlineStyle(string $handle)
     {
-        $toRender = $this->assetManager->getDependencies('css');
-
-        foreach ($toRender as $dep) {
-            /* @var $dep Asset */
-            if ($handle === $dep->handle) {
-                return $this->getAssetContent($dep);
-            }
-        }
-
-        return '';
+        return $this->inline($handle, 'css');
     }
 
     public function inlineScript(string $handle): string
     {
-        $toRender = $this->assetManager->getDependencies('js');
+        return $this->inline($handle, 'js');
+    }
+
+    /**
+     * @param string $handle
+     * @param string $dependencyType
+     * @return false|string
+     */
+    private function inline(string $handle, string $dependencyType)
+    {
+        $toRender = $this->assetManager->getDependencies($dependencyType);
 
         foreach ($toRender as $dep) {
             /* @var $dep Asset */

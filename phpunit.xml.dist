@@ -13,7 +13,7 @@
   </php>
 
   <testsuites>
-    <testsuite name="Symfony Asset Component Test Suite">
+    <testsuite name="Wonderwp Asset Component Test Suite">
       <directory>./tests/</directory>
     </testsuite>
   </testsuites>

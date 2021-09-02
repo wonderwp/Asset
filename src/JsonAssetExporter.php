@@ -7,7 +7,6 @@ class JsonAssetExporter extends AbstractAssetExporter
     /** @inheritdoc */
     public function export()
     {
-        $legacy = isset($this->assoc_args['legacy']) ? filter_var($this->assoc_args['legacy'], FILTER_VALIDATE_BOOLEAN): false;
         /**
          * Get registered assets from manager
          */
@@ -46,12 +45,9 @@ class JsonAssetExporter extends AbstractAssetExporter
             $cssFilesJSON[$groupName] = [];
 
             foreach ($groupFiles as $css) {
-                $css->src                   = str_replace($blogUrl, '', $css->src);
-                if ($legacy) {
-                    $cssFilesJSON[$groupName][] = $assetsPrefix . $css->src;
-                } else {
-                    $cssFilesJSON[$groupName][$css->handle] = $assetsPrefix . $css->src;
-                }
+                $css->src = str_replace($blogUrl, '', $css->src);
+                $cssFilesJSON[$groupName][] = $assetsPrefix . $css->src;
+
             }
         }
         $json['css'] = $cssFilesJSON;
@@ -71,11 +67,7 @@ class JsonAssetExporter extends AbstractAssetExporter
 
             foreach ($groupFiles as $js) {
                 $js->src                   = str_replace($blogUrl, '', $js->src);
-                if ($legacy) {
-                    $jsFilesJSON[$groupName][] = $assetsPrefix . $js->src;
-                } else {
-                    $jsFilesJSON[$groupName][$js->handle] = $assetsPrefix . $js->src;
-                }
+                $jsFilesJSON[$groupName][] = $assetsPrefix . $js->src;
             }
         }
         $json['js'] = $jsFilesJSON;

@@ -2,26 +2,24 @@
 
 namespace WonderWp\Component\Asset\Tests;
 
-use PHPUnit\Framework\TestCase;
 use Symfony\Component\Asset\VersionStrategy\JsonManifestVersionStrategy;
 use WonderWp\Component\Asset\AssetPackage;
 use WonderWp\Component\Asset\AssetPackages;
 use WonderWp\Component\Asset\PackageAssetEnqueur;
 
-class PackageAssetEnqueurTest extends TestCase
+class PackageAssetEnqueurTest extends AbstractEnqueurTest
 {
     public function getStub($packages)
     {
-        $_SERVER["HTTP_HOST"] = 'wdf-base.test';
-
         $stub = $this->getMockBuilder(PackageAssetEnqueur::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['wpEnqueueStyle', 'wpEnqueueScript', 'filterBlogUrl'])
+            ->onlyMethods(['filterBlogUrl'])
             ->getMock();
 
         $stub->method('filterBlogUrl')->willReturn('http://wdf-base.test');
         $stub->initBlogUrl();
         $stub->initPackages($packages);
+        $stub->setWordpressAssetGateway($this->wordpressAssetGatewayMock);
 
         return $stub;
     }
@@ -42,8 +40,8 @@ class PackageAssetEnqueurTest extends TestCase
 
         $stub = $this->getStub($packages);
 
-        $stub->expects($this->once())
-            ->method('wpEnqueueStyle')
+        $this->wordpressAssetGatewayMock->expects($this->once())
+            ->method('enqueueStyle')
             ->with($this->equalTo('styleguide_wwp_legacy'), $this->equalTo('http://wdf-base.test/app/themes/wwp_child_theme/assets/final/legacy/css/styleguide.345d3412.css'));
 
         $stub->enqueueStyleGroups(['styleguide']);
@@ -66,8 +64,8 @@ class PackageAssetEnqueurTest extends TestCase
 
         $stub = $this->getStub($packages);
 
-        $stub->expects($this->once())
-            ->method('wpEnqueueScript')
+        $this->wordpressAssetGatewayMock->expects($this->once())
+            ->method('enqueueScript')
             ->with(
                 $this->equalTo('vendor_wwp_legacy'),
                 $this->equalTo('http://wdf-base.test/app/themes/wwp_child_theme/assets/final/legacy/js/vendor.dfc2b3d9.js')
@@ -93,8 +91,8 @@ class PackageAssetEnqueurTest extends TestCase
 
         $stub = $this->getStub($packages);
 
-        $stub->expects($this->exactly(2))
-            ->method('wpEnqueueScript')
+        $this->wordpressAssetGatewayMock->expects($this->exactly(2))
+            ->method('enqueueScript')
             ->withConsecutive(
                 [
                     $this->equalTo('styleguide_wwp_legacy'),
@@ -135,8 +133,8 @@ class PackageAssetEnqueurTest extends TestCase
 
         $stub = $this->getStub($packages);
 
-        $stub->expects($this->exactly(4))
-            ->method('wpEnqueueScript')
+        $this->wordpressAssetGatewayMock->expects($this->exactly(4))
+            ->method('enqueueScript')
             ->withConsecutive(
                 [
                     $this->equalTo('styleguide_wwp_legacy'),
@@ -187,8 +185,8 @@ class PackageAssetEnqueurTest extends TestCase
 
         $stub = $this->getStub($packages);
 
-        $stub->expects($this->once())
-            ->method('wpEnqueueStyle')
+        $this->wordpressAssetGatewayMock->expects($this->once())
+            ->method('enqueueStyle')
             ->with(
                 $this->equalTo('styleguide_wwp_legacy'),
                 $this->equalTo('http://wdf-base.test/app/themes/wwp_child_theme/assets/final/legacy/css/styleguide.345d3412.css')

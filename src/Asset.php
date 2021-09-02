@@ -2,7 +2,9 @@
 
 namespace WonderWp\Component\Asset;
 
-class Asset extends \_WP_Dependency
+use _WP_Dependency;
+
+class Asset extends _WP_Dependency
 {
     /**
      * Group of this dependency, use GROUP_ consts
