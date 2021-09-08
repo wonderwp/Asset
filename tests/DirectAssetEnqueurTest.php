@@ -2,11 +2,7 @@
 
 namespace WonderWp\Component\Asset\Tests;
 
-use PHPUnit\Framework\TestCase;
-use WonderWp\Component\Asset\AssetManager;
 use WonderWp\Component\Asset\DirectAssetEnqueuer;
-use WonderWp\Component\Asset\Tests\classes\ExampleAssetService;
-use WonderWp\Component\Asset\WordpressAssetGateway;
 
 class DirectAssetEnqueurTest extends AbstractEnqueurTest
 {

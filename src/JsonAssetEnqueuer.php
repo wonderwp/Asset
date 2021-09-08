@@ -109,10 +109,12 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
         if ($this->isPropertyExistInManifest('css', $handle)) {
             $src = $this->getPathSrcFrom('css', $handle);
 
-            if (file_exists($src)) {
-                return  $this->wordpressAssetGateway->applyFilters('wwp.enqueur.critical.js.content', file_get_contents($src));
+            if (file_exists($src) && !$this->wordpressAssetGateway->isAdmin()) {
+                return $this->wordpressAssetGateway->applyFilters('wwp.enqueur.critical.css.content', file_get_contents($src));
             }
         }
+
+        return '';
     }
 
     public function inlineScript(string $handle)
@@ -120,10 +122,12 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
         if ($this->isPropertyExistInManifest('js', $handle)) {
             $src = $this->getPathSrcFrom('js', $handle);
 
-            if (file_exists($src) && !$this->wordpressAssetGateway->isAdmin()) {
-                return  $this->wordpressAssetGateway->applyFilters('wwp.enqueur.critical.css.content', file_get_contents($src));
+            if (file_exists($src)) {
+                return $this->wordpressAssetGateway->applyFilters('wwp.enqueur.critical.js.content', file_get_contents($src));
             }
         }
+
+        return '';
     }
 
     /**

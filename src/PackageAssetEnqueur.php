@@ -4,7 +4,7 @@
 namespace WonderWp\Component\Asset;
 
 
-class PackageAssetEnqueur implements AssetEnqueuerInterface
+class PackageAssetEnqueur extends AbstractAssetEnqueuer
 {
     /**
      * @var AssetPackages
@@ -17,19 +17,25 @@ class PackageAssetEnqueur implements AssetEnqueuerInterface
      */
     private $wordpressAssetGateway;
 
-    public function __construct($packages, $entryPath, WordpressAssetGateway $wordpressAssetGateway = null)
+    public function __construct(AssetManager $assetManager, $packages, $entryPath, WordpressAssetGateway $wordpressAssetGateway = null)
     {
-        $this->entryPath = $entryPath;
+        parent::__construct($assetManager);
+
 
         if ($wordpressAssetGateway === null) {
             $this->wordpressAssetGateway = new WordpressAssetGateway();
         } else {
             $this->wordpressAssetGateway = $wordpressAssetGateway;
         }
-
+        $this->initEntryPath($entryPath);
         $this->initBlogUrl();
         $this->initPackages($packages);
         $this->register();
+    }
+
+    public function initEntryPath(string $entryPath)
+    {
+        $this->entryPath = $entryPath;
     }
 
     public function initBlogUrl()
@@ -44,6 +50,8 @@ class PackageAssetEnqueur implements AssetEnqueuerInterface
 
     public function initPackages($packages)
     {
+        $this->assetManager->callServices();
+
         foreach ($packages->getPackages() as $package) {
             /** @var AssetPackage $package */
             $package->setBaseUrl($this->blogUrl);
@@ -59,9 +67,40 @@ class PackageAssetEnqueur implements AssetEnqueuerInterface
 
     public function register()
     {
-        // Todo: récupérer les groupNames pour itérer et register les assets des packages
-        foreach ($this->packages->getPackagesBy('css') as $package) {
-            var_dump($package);die;
+        $styleGroups = array_reduce($this->assetManager->getDependencies('css'), function ($acc, $asset) {
+            /** @var Asset $asset */
+            if (!in_array($asset->concatGroup, $acc)) {
+                $acc[] = $asset->concatGroup;
+            }
+
+            return $acc;
+        }, []);
+
+        foreach ($styleGroups as $group) {
+            foreach ($this->packages->getPackagesBy('css') as $package) {
+                /** @var $package AssetPackage */
+                $this->wordpressAssetGateway->registerStyle($this->getHandleName($group, $package), $package->getUrl('css/' . $group . '.css'), [], null);
+
+            }
+        }
+
+        $scriptGroups = array_reduce($this->assetManager->getDependencies('js'), function ($acc, $asset) {
+            /** @var Asset $asset */
+            if (!isset($acc[$asset->concatGroup])) {
+                $acc[$asset->concatGroup] = $this->assetManager->getGroupDepencyGroups($asset->concatGroup, 'js');
+            }
+
+            return $acc;
+        }, ['vendor' => []]);
+
+        foreach ($scriptGroups as $group => $dependencies) {
+            foreach ($this->packages->getPackagesBy('js') as $package) {
+                $dependenciesNames = $this->computeDependencyArray($package, $dependencies);
+
+                /** @var $package AssetPackage */
+                $this->wordpressAssetGateway->registerScript($this->getHandleName($group, $package), $package->getUrl('js/' . $group . '.js'), $dependenciesNames, null);
+
+            }
         }
     }
 
@@ -70,7 +109,7 @@ class PackageAssetEnqueur implements AssetEnqueuerInterface
         foreach ($groupNames as $group) {
             foreach ($this->packages->getPackagesBy('css') as $package) {
                 /** @var AssetPackage $package */
-                $this->wordpressAssetGateway->enqueueStyle($group . '_wwp_' . $package->getName(), $package->getUrl('css/' . $group . '.css'), [], null);
+                $this->wordpressAssetGateway->enqueueStyle($this->getHandleName($group, $package));
             }
         }
     }
@@ -80,7 +119,7 @@ class PackageAssetEnqueur implements AssetEnqueuerInterface
         foreach ($groupNames as $group) {
             foreach ($this->packages->getPackagesBy('js') as $package) {
                 /** @var AssetPackage $package */
-                $this->wordpressAssetGateway->enqueueScript($group . '_wwp_' . $package->getName(), $package->getUrl('js/' . $group . '.js'), [], null);
+                $this->wordpressAssetGateway->enqueueScript($this->getHandleName($group, $package));
             }
         }
     }
@@ -95,27 +134,28 @@ class PackageAssetEnqueur implements AssetEnqueuerInterface
         $this->wordpressAssetGateway->enqueueScript($handle);
     }
 
-    public function inlineStyle(string $handle)
+    public function inlineScript(string $handle)
     {
         foreach ($this->packages->getPackagesBy('critical') as $package) {
             $path = $package->getFullPath('js/' . $handle . '.js');
-            $src = $this->entryPath . DIRECTORY_SEPARATOR . $path;
-            if (file_exists($src) && !is_admin()) {
-                return apply_filters('wwp.enqueur.critical.js.content', file_get_contents($src));
+            $src = $this->entryPath . $path;
+
+            if (file_exists($src)) {
+                return $this->wordpressAssetGateway->applyFilters('wwp.enqueur.critical.js.content', file_get_contents($src));
             }
         }
 
         return '';
     }
 
-    public function inlineScript(string $handle)
+    public function inlineStyle(string $handle)
     {
         foreach ($this->packages->getPackagesBy('critical') as $package) {
             $path = $package->getFullPath('css/' . $handle . '.css');
-            $src = $this->entryPath . DIRECTORY_SEPARATOR . $path;
+            $src = $this->entryPath . $path;
 
-            if (file_exists($src) && !is_admin()) {
-                return apply_filters('wwp.enqueur.critical.css.content', file_get_contents($src));
+            if (file_exists($src) && !$this->wordpressAssetGateway->isAdmin()) {
+                return $this->wordpressAssetGateway->applyFilters('wwp.enqueur.critical.css.content', file_get_contents($src));
             }
         }
 
@@ -129,4 +169,29 @@ class PackageAssetEnqueur implements AssetEnqueuerInterface
     {
         $this->wordpressAssetGateway = $wordpressAssetGateway;
     }
+
+    /**
+     * @param AssetPackage $package
+     * @param $dependencies
+     * @return array|string[]
+     */
+    protected function computeDependencyArray(AssetPackage $package, $dependencies): array
+    {
+        $dependenciesNames = array_map(function ($dependency) use ($package) {
+            return $this->getHandleName($dependency, $package);
+        }, $dependencies);
+        return $dependenciesNames;
+    }
+
+    /**
+     * @param $group
+     * @param AssetPackage $package
+     * @return string
+     */
+    protected function getHandleName($group, AssetPackage $package): string
+    {
+        return $group . '_wwp_' . $package->getName();
+    }
+
+
 }

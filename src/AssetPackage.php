@@ -107,7 +107,11 @@ class AssetPackage extends Package
         return $this->baseUrl;
     }
 
-    public function isAssetTypeConcerned($assetType)
+    /**
+     * @param string $assetType One into 'js', 'css', 'critical'
+     * @return bool
+     */
+    public function isAssetTypeConcerned(string $assetType)
     {
         return in_array($assetType, $this->concernedAssetTypes, true);
     }
