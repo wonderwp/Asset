@@ -44,49 +44,81 @@ class DirectAssetEnqueuer extends AbstractAssetEnqueuer
     }
 
     /** @inheritdoc */
-    public function enqueueStyleGroups(array $groupNames)
+    public function enqueueStyleGroup(string $groupName)
     {
         $toRender = $this->assetManager->getDependencies('css');
 
         foreach ($toRender as $dep) {
             /* @var $dep Asset */
-            if (in_array($dep->concatGroup, $groupNames)) {
+            if ($dep->concatGroup === $groupName) {
+                $this->enqueueStyle($dep->handle);
+            }
+        }
+
+        return $this;
+    }
+
+    /** @inheritdoc */
+    public function enqueueScriptGroup(string $groupName)
+    {
+        $toRender = $this->assetManager->getDependencies('js');
+
+        foreach ($toRender as $dep) {
+            /* @var $dep Asset */
+            if ($dep->concatGroup === $groupName) {
+                $this->enqueueScript($dep->handle);
+            }
+        }
+    }
+
+    /** @inheritdoc */
+    public function enqueueStyle(string $handle)
+    {
+        $this->wordpressAssetGateway->enqueueStyle($handle);
+    }
+
+    /** @inheritdoc */
+    public function enqueueScript(string $handle)
+    {
+        $this->wordpressAssetGateway->enqueueScript($handle);
+    }
+
+    /** @inheritdoc */
+    public function inlineStyle(string $handle): string
+    {
+        return $this->inline($handle, 'css');
+    }
+
+    /** @inheritdoc */
+    public function inlineScript(string $handle): string
+    {
+        return $this->inline($handle, 'js');
+    }
+
+    /** @inheritdoc */
+    public function inlineStyleGroup(string $groupName)
+    {
+        $toRender = $this->assetManager->getDependencies('css');
+
+        foreach ($toRender as $dep) {
+            /* @var $dep Asset */
+            if ($dep->concatGroup === $groupName) {
                 $this->enqueueStyle($dep->handle);
             }
         }
     }
 
     /** @inheritdoc */
-    public function enqueueScriptGroups(array $groupNames)
+    public function inlineScriptGroup(string $groupName)
     {
         $toRender = $this->assetManager->getDependencies('js');
 
         foreach ($toRender as $dep) {
             /* @var $dep Asset */
-            if (in_array($dep->concatGroup, $groupNames)) {
+            if ($dep->concatGroup === $groupName) {
                 $this->enqueueScript($dep->handle);
             }
         }
-    }
-
-    public function enqueueStyle(string $handle)
-    {
-        $this->wordpressAssetGateway->enqueueStyle($handle);
-    }
-
-    public function enqueueScript(string $handle)
-    {
-        $this->wordpressAssetGateway->enqueueScript($handle);
-    }
-
-    public function inlineStyle(string $handle)
-    {
-        return $this->inline($handle, 'css');
-    }
-
-    public function inlineScript(string $handle): string
-    {
-        return $this->inline($handle, 'js');
     }
 
     /**
@@ -121,6 +153,10 @@ class DirectAssetEnqueuer extends AbstractAssetEnqueuer
         }
     }
 
+    /**
+     * @param string $url
+     * @return bool
+     */
     protected function isAbsoluteUrl(string $url)
     {
         return str_contains($url, '://') || '//' === substr($url, 0, 2);

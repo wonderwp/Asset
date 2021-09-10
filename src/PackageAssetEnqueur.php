@@ -104,36 +104,59 @@ class PackageAssetEnqueur extends AbstractAssetEnqueuer
         }
     }
 
-    public function enqueueStyleGroups(array $groupNames)
+    /** @inheritDoc */
+    public function enqueueStyleGroup(string $groupName)
     {
-        foreach ($groupNames as $group) {
-            foreach ($this->packages->getPackagesBy('css') as $package) {
-                /** @var AssetPackage $package */
-                $this->wordpressAssetGateway->enqueueStyle($this->getHandleName($group, $package));
-            }
+        foreach ($this->packages->getPackagesBy('css') as $package) {
+            /** @var AssetPackage $package */
+            $this->wordpressAssetGateway->enqueueStyle($this->getHandleName($groupName, $package));
         }
     }
 
-    public function enqueueScriptGroups(array $groupNames)
+    /** @inheritDoc */
+    public function enqueueScriptGroup(string $groupName)
     {
-        foreach ($groupNames as $group) {
-            foreach ($this->packages->getPackagesBy('js') as $package) {
-                /** @var AssetPackage $package */
-                $this->wordpressAssetGateway->enqueueScript($this->getHandleName($group, $package));
-            }
+        foreach ($this->packages->getPackagesBy('js') as $package) {
+            /** @var AssetPackage $package */
+            $this->wordpressAssetGateway->enqueueScript($this->getHandleName($groupName, $package));
         }
+
     }
 
+    /** @inheritDoc */
     public function enqueueStyle(string $handle)
     {
         $this->wordpressAssetGateway->enqueueStyle($handle);
     }
 
+    /** @inheritDoc */
     public function enqueueScript(string $handle)
     {
         $this->wordpressAssetGateway->enqueueScript($handle);
     }
 
+    /** @inheritDoc */
+    public function inlineStyle(string $handle)
+    {
+        foreach ($this->packages->getPackagesBy('critical') as $package) {
+            $path = $package->getFullPath('css/' . $handle . '.css');
+            $src = $this->entryPath . $path;
+
+            if (file_exists($src) && !$this->wordpressAssetGateway->isAdmin()) {
+                return $this->wordpressAssetGateway->applyFilters('wwp.enqueur.critical.css.content', file_get_contents($src));
+            }
+        }
+
+        return '';
+    }
+
+    /** @inheritDoc */
+    public function inlineStyleGroup(string $groupName)
+    {
+        $this->inlineStyle($groupName);
+    }
+
+    /** @inheritDoc */
     public function inlineScript(string $handle)
     {
         foreach ($this->packages->getPackagesBy('critical') as $package) {
@@ -148,18 +171,9 @@ class PackageAssetEnqueur extends AbstractAssetEnqueuer
         return '';
     }
 
-    public function inlineStyle(string $handle)
+    public function inlineScriptGroup(string $groupName)
     {
-        foreach ($this->packages->getPackagesBy('critical') as $package) {
-            $path = $package->getFullPath('css/' . $handle . '.css');
-            $src = $this->entryPath . $path;
-
-            if (file_exists($src) && !$this->wordpressAssetGateway->isAdmin()) {
-                return $this->wordpressAssetGateway->applyFilters('wwp.enqueur.critical.css.content', file_get_contents($src));
-            }
-        }
-
-        return '';
+        $this->inlineScript($groupName);
     }
 
     /**
@@ -192,6 +206,4 @@ class PackageAssetEnqueur extends AbstractAssetEnqueuer
     {
         return $group . '_wwp_' . $package->getName();
     }
-
-
 }

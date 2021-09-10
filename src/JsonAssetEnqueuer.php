@@ -39,7 +39,6 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
         $this->blogUrl = $this->wordpressAssetGateway->applyFilters('wwp.JsonAssetsEnqueur.blogUrl', $protocol . rtrim("//{$_SERVER['HTTP_HOST']}", '/'));
 
 
-
         $this->register();
     }
 
@@ -70,7 +69,11 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
         }
     }
 
-    protected function computeDependencyArray($groupName)
+    /**
+     * @param string $groupName
+     * @return string[]
+     */
+    protected function computeDependencyArray(string $groupName)
     {
         $dependencyArray = isset($this->manifest->jsDependencies->{$groupName}) ? $this->manifest->jsDependencies->{$groupName} : [];
 
@@ -78,32 +81,30 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     }
 
     /** @inheritdoc */
-    public function enqueueStyleGroups(array $groupNames)
+    public function enqueueStyleGroup(string $groupName)
     {
-        foreach ($groupNames as $group) {
-            $this->enqueueStyle($group);
-        }
+        $this->enqueueStyle($groupName);
     }
-
 
     /** @inheritdoc */
-    public function enqueueScriptGroups(array $groupNames)
+    public function enqueueScriptGroup(string $groupName)
     {
-        foreach ($groupNames as $group) {
-            $this->enqueueScript($group);
-        }
+        $this->enqueueScript($groupName);
     }
 
+    /** @inheritDoc */
     public function enqueueStyle(string $handle)
     {
         $this->wordpressAssetGateway->enqueueStyle($handle);
     }
 
+    /** @inheritDoc */
     public function enqueueScript(string $handle)
     {
         $this->wordpressAssetGateway->enqueueScript($handle);
     }
 
+    /** @inheritDoc */
     public function inlineStyle(string $handle)
     {
         if ($this->isPropertyExistInManifest('css', $handle)) {
@@ -117,6 +118,13 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
         return '';
     }
 
+    /** @inheritDoc */
+    public function inlineStyleGroup(string $groupName)
+    {
+        $this->inlineStyle($groupName);
+    }
+
+    /** @inheritDoc */
     public function inlineScript(string $handle)
     {
         if ($this->isPropertyExistInManifest('js', $handle)) {
@@ -128,6 +136,12 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
         }
 
         return '';
+    }
+
+    /** @inheritDoc */
+    public function inlineScriptGroup(string $groupName)
+    {
+        $this->inlineScript($groupName);
     }
 
     /**
