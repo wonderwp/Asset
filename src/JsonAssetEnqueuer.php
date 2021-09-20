@@ -4,26 +4,29 @@ namespace WonderWp\Component\Asset;
 
 class JsonAssetEnqueuer extends AbstractAssetEnqueuer
 {
-
     /** @var object */
     protected $manifest;
     /** @var string */
     protected $blogUrl;
     /** @var int */
     protected $version;
-    protected $dest;
-    protected $prefix;
+    /** @var string */
+    private $publicPath;
     /**
      * @var WordpressAssetGateway
      */
     private $wordpressAssetGateway;
 
-    public function __construct(AssetManager $assetManager, $manifestPath, $dest, $prefix, WordpressAssetGateway $wordpressAssetGateway = null)
+    /**
+     * @param AssetManager $assetManager
+     * @param string $manifestPath
+     * @param string $publicPath Path to asset location
+     * @param string $blogUrl Website url
+     * @param WordpressAssetGateway|null $wordpressAssetGateway
+     */
+    public function __construct(AssetManager $assetManager, $filesystem, string $manifestPath, string $publicPath, string $blogUrl, WordpressAssetGateway $wordpressAssetGateway = null)
     {
-        parent::__construct($assetManager);
-        $this->dest = $dest;
-        $this->prefix = $prefix;
-        $this->manifest = json_decode(file_get_contents($manifestPath));
+        parent::__construct($assetManager, $filesystem);
 
         if ($wordpressAssetGateway === null) {
             $this->wordpressAssetGateway = new WordpressAssetGateway();
@@ -31,87 +34,135 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
             $this->wordpressAssetGateway = $wordpressAssetGateway;
         }
 
-        $protocol = 'http';
-        if (!empty($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") {
-            $protocol .= "s";
-        }
-        $protocol .= ':';
-        $this->blogUrl = $this->wordpressAssetGateway->applyFilters('wwp.JsonAssetsEnqueur.blogUrl', $protocol . rtrim("//{$_SERVER['HTTP_HOST']}", '/'));
+        $this->manifest = json_decode($this->filesystem->get_contents($manifestPath));
 
+        $this->publicPath = $publicPath;
+
+        $this->blogUrl = $this->wordpressAssetGateway->applyFilters('wwp.enqueuer.blogUrl', $blogUrl, $this);
 
         $this->register();
     }
 
-    private function register()
+    /**
+     * Make js/css known to WordPress to be able to enqueue them more easily later on
+     */
+    private function register(): void
     {
-        foreach ($this->manifest->css as $group => $styles) {
-            $src = $this->getUrlSrcFrom('css', $group);
+        $this->registerStyles();
+        $this->registerScripts();
+    }
+
+    private function registerStyles(): void
+    {
+        $cssToRegister = [];
+
+        $manifestCssAssets = $this->wordpressAssetGateway->applyFilters('wwp.enqueuer.register.cssAssets', (array) $this->manifest->css, $this);
+
+        foreach ($manifestCssAssets as $group => $styles) {
+            $dependencies = $this->computeDependencyArray($group, 'css');
+
+            $src = $this->getUrlFrom('css', $group);
 
             if (!empty($src)) {
-                $this->wordpressAssetGateway->registerStyle($group, $src, [], null);
+                $cssToRegister[$group] = [
+                    'handle' => $group,
+                    'src' => $src,
+                    'deps' => $dependencies,
+                    'ver' => null,
+                    'media' => null
+                ];
             }
         }
 
-        $src = $this->getVendorUrl();
-        $dependencies = $this->computeDependencyArray('vendor');
-        if (!empty($src)) {
-            $this->wordpressAssetGateway->registerScript('vendor', $src, $dependencies, null, true);
+        foreach ($cssToRegister as $cssAsset) {
+            $this->wordpressAssetGateway->registerStyle($cssAsset['handle'], $cssAsset['src'], $cssAsset['deps'], $cssAsset['ver'], $cssAsset['media']);
         }
+    }
 
-        foreach ($this->manifest->js as $group => $scripts) {
-            $dependencies = $this->computeDependencyArray($group);
+    private function registerScripts(): void
+    {
+        $jsToRegister = [];
 
-            $src = $this->getUrlSrcFrom('js', $group);
+        $manifestJsAssets = $this->wordpressAssetGateway->applyFilters('wwp.enqueuer.register.jsAssets', (array) $this->manifest->js, $this);
+
+        foreach ($manifestJsAssets as $group => $scripts) {
+            $dependencies = $this->computeDependencyArray($group, 'js');
+
+            $src = $this->getUrlFrom('js', $group);
 
             if (!empty($src)) {
-                $this->wordpressAssetGateway->registerScript($group, $src, $dependencies, null, true);
+                $jsToRegister[$group] = [
+                    'handle' => $group,
+                    'src' => $src,
+                    'deps' => $dependencies,
+                    'ver' => null,
+                    'in_footer' => true
+                ];
             }
+        }
+
+        foreach ($jsToRegister as $jsAsset) {
+            $this->wordpressAssetGateway->registerScript($jsAsset['handle'], $jsAsset['src'], $jsAsset['deps'], $jsAsset['ver'], $jsAsset['in_footer']);
         }
     }
 
     /**
      * @param string $groupName
+     * @param string $dependencyType
      * @return string[]
      */
-    protected function computeDependencyArray(string $groupName)
+    protected function computeDependencyArray(string $groupName, string $dependencyType): array
     {
-        $dependencyArray = isset($this->manifest->jsDependencies->{$groupName}) ? $this->manifest->jsDependencies->{$groupName} : [];
-
-        return $dependencyArray;
+        switch ($dependencyType) {
+            case 'js':
+                return $this->manifest->jsDependencies->{$groupName} ?? [];
+            case 'css':
+                return $this->manifest->cssDependencies->{$groupName} ?? [];
+            default:
+                return [];
+        }
     }
 
     /** @inheritdoc */
     public function enqueueStyleGroup(string $groupName)
     {
         $this->enqueueStyle($groupName);
+
+        return $this;
     }
 
     /** @inheritdoc */
     public function enqueueScriptGroup(string $groupName)
     {
         $this->enqueueScript($groupName);
+
+        return $this;
     }
 
     /** @inheritDoc */
     public function enqueueStyle(string $handle)
     {
         $this->wordpressAssetGateway->enqueueStyle($handle);
+
+        return $this;
     }
 
     /** @inheritDoc */
     public function enqueueScript(string $handle)
     {
         $this->wordpressAssetGateway->enqueueScript($handle);
+
+        return $this;
     }
 
     /** @inheritDoc */
     public function inlineStyle(string $handle)
     {
-        if ($this->isPropertyExistInManifest('css', $handle)) {
-            $src = $this->getPathSrcFrom('css', $handle);
+        if ($this->doesPropertyExistInManifest('css', $handle)) {
+            $src = $this->getPathFrom('css', $handle);
 
-            if (file_exists($src) && !$this->wordpressAssetGateway->isAdmin()) {
-                return $this->wordpressAssetGateway->applyFilters('wwp.enqueur.critical.css.content', file_get_contents($src));
+            if ($this->filesystem->exists($src)) {
+                return $this->wordpressAssetGateway->applyFilters('wwp.enqueuer.inline.css.content', $this->filesystem->get_contents($src), $this);
             }
         }
 
@@ -121,17 +172,18 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritDoc */
     public function inlineStyleGroup(string $groupName)
     {
-        $this->inlineStyle($groupName);
+        return $this->inlineStyle($groupName);
     }
 
     /** @inheritDoc */
     public function inlineScript(string $handle)
     {
-        if ($this->isPropertyExistInManifest('js', $handle)) {
-            $src = $this->getPathSrcFrom('js', $handle);
+        if ($this->doesPropertyExistInManifest('js', $handle)) {
 
-            if (file_exists($src)) {
-                return $this->wordpressAssetGateway->applyFilters('wwp.enqueur.critical.js.content', file_get_contents($src));
+            $src = $this->getPathFrom('js', $handle);
+
+            if ($this->filesystem->exists($src)) {
+                return $this->wordpressAssetGateway->applyFilters('wwp.enqueuer.inline.js.content', $this->filesystem->get_contents($src), $this);
             }
         }
 
@@ -139,19 +191,19 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     }
 
     /** @inheritDoc */
-    public function inlineScriptGroup(string $groupName)
+    public function inlineScriptGroup(string $groupName): string
     {
-        $this->inlineScript($groupName);
+        return $this->inlineScript($groupName);
     }
 
     /**
-     * @return int
+     * @return int|null
      */
-    public function getVersion()
+    public function getVersion(): ?int
     {
         if ($this->version === null) {
-            $fileVersion = $_SERVER['DOCUMENT_ROOT'] . $this->dest . '/version.php';
-            $this->version = file_exists($fileVersion) ? include($fileVersion) : null;
+            $fileVersion = $this->publicPath . $this->manifest->site->assets_dest . '/version.php';
+            $this->version = $this->filesystem->exists($fileVersion) ? include($fileVersion) : null;
         }
 
         return $this->version;
@@ -162,7 +214,7 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
      * @param string $group
      * @return bool
      */
-    protected function isPropertyExistInManifest(string $type, string $group)
+    protected function doesPropertyExistInManifest(string $type, string $group): bool
     {
         return property_exists($this->manifest->{$type}, $group);
     }
@@ -172,7 +224,7 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
      * @param string $group
      * @return string
      */
-    protected function getUrlSrcFrom(string $type, string $group)
+    protected function getUrlFrom(string $type, string $group): string
     {
         return $this->addBlogUrlTo($this->getSrcFrom($type, $group));
     }
@@ -182,7 +234,7 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
      * @param string $group
      * @return string
      */
-    protected function getPathSrcFrom(string $type, string $group)
+    protected function getPathFrom(string $type, string $group): string
     {
         return $this->addDocumentRootTo($this->getSrcFrom($type, $group));
     }
@@ -192,38 +244,26 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
      * @param string $group
      * @return string
      */
-    protected function getSrcFrom(string $type, string $group)
+    protected function getSrcFrom(string $type, string $group): string
     {
-        $asset = $this->manifest->site->assets_dest . '/' . $type . '/' . $group . $this->getVersion() . '.' . $type;
-
-        return $asset;
+        return $this->manifest->site->assets_dest . '/' . $type . '/' . $group . $this->getVersion() . '.' . $type;
     }
 
     /**
      * @param string $path
      * @return string
      */
-    protected function addBlogUrlTo(string $path)
+    protected function addBlogUrlTo(string $path): string
     {
-        return $this->blogUrl . str_replace($this->prefix, '', $path);
+        return $this->blogUrl . $path;
     }
 
     /**
      * @param string $path
      * @return string
      */
-    protected function addDocumentRootTo(string $path)
+    protected function addDocumentRootTo(string $path): string
     {
-        return $_SERVER['DOCUMENT_ROOT'] . str_replace($this->prefix, '', $path);
-    }
-
-    /**
-     * @return string
-     */
-    protected function getVendorUrl()
-    {
-        $asset = str_replace($this->prefix, '', $this->manifest->site->assets_dest . '/js/vendor' . $this->getVersion() . '.js');
-
-        return $this->addBlogUrlTo($asset);
+        return $this->publicPath . str_replace($this->manifest->site->prefix, '', $path);
     }
 }

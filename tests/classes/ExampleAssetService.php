@@ -12,14 +12,14 @@ class ExampleAssetService extends AbstractAssetService
     {
         $this->assets = [
             'css' => [
-                new Asset('first-css', '/fixtures/css/first.css', ['styleguide'], null, false, 'first-group'),
-                new Asset('second-css', '/fixtures/css/second.css', ['admin'], null, false, 'admin'),
-                new Asset('third-css', '/fixtures/css/third.css', ['admin'], null, false, 'first-group')
+                new Asset('first-css', '/fixtures/css/first.css', ['second-css'], null, false, 'admin'),
+                new Asset('second-css', '/fixtures/css/second.css', [], null, false, 'styleguide'),
+                new Asset('third-css', '/fixtures/css/third.css', [], null, false, 'styleguide')
             ],
-            'js'  => [
-                new Asset('first-js', '/fixtures/js/first.js', ['second-js'], null, false, 'first-group'),
-                new Asset('second-js', '/fixtures/js/second.js', [], null, false, 'first-group'),
-                new Asset('third-js', '/fixtures/js/third.js', [], null, false, 'second-group'),
+            'js' => [
+                new Asset('first-js', '/fixtures/js/first.js', ['second-js'], null, false, 'admin'),
+                new Asset('second-js', '/fixtures/js/second.js', [], null, false, 'styleguide'),
+                new Asset('third-js', '/fixtures/js/third.js', [], null, false, 'styleguide'),
             ],
         ];
 

@@ -3,55 +3,33 @@
 namespace WonderWp\Component\Asset\Tests;
 
 use Symfony\Component\Asset\VersionStrategy\JsonManifestVersionStrategy;
-use WonderWp\Component\Asset\AssetManager;
 use WonderWp\Component\Asset\AssetPackage;
 use WonderWp\Component\Asset\AssetPackages;
-use WonderWp\Component\Asset\PackageAssetEnqueur;
-use WonderWp\Component\Asset\Tests\classes\PackageAssetService;
+use WonderWp\Component\Asset\PackageAssetEnqueuer;
 
-class PackageAssetEnqueurTest extends AbstractEnqueurTest
+class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
 {
-    protected function setUp(): void
+    public function getEnqueuer(AssetPackages $packages): PackageAssetEnqueuer
     {
-        parent::setUp();
-        $assetManager = AssetManager::getInstance();
-        $assetManager->addAssetService(new PackageAssetService());
-        $this->assetManager = $assetManager;
+        return new PackageAssetEnqueuer($this->assetManager, new WP_Filesystem_Direct(), $packages, __DIR__, 'http://wdf-base.test', $this->wordpressAssetGatewayMock);
     }
 
-    public function getStub($packages)
-    {
-        $stub = $this->getMockBuilder(PackageAssetEnqueur::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['filterBlogUrl'])
-            ->getMock();
-
-        $stub->method('filterBlogUrl')->willReturn('http://wdf-base.test');
-        $stub->setWordpressAssetGateway($this->wordpressAssetGatewayMock);
-        $stub->assetManager = $this->assetManager;
-        $stub->initEntryPath(__DIR__);
-        $stub->initBlogUrl();
-        $stub->initPackages($packages);
-
-        return $stub;
-    }
-
-    public function testRegister()
+    public function testRegisterShouldCallWordpressRegisterWithCorrectArgs()
     {
         $this->wordpressAssetGatewayMock
-            ->expects($this->exactly(6))
+            ->expects($this->exactly(4))
             ->method('registerStyle')
             ->withConsecutive(
                 [
                     $this->equalTo('admin_wwp_legacy'),
                     $this->equalTo('http://wdf-base.test/fixtures/legacy/css/admin.3401c219.css'),
-                    $this->equalTo([]),
+                    $this->equalTo(['styleguide_wwp_legacy']),
                     $this->equalTo(null),
                 ],
                 [
                     $this->equalTo('admin_wwp_modern'),
                     $this->equalTo('http://wdf-base.test/fixtures/modern/css/admin.38d10f31.css'),
-                    $this->equalTo([]),
+                    $this->equalTo(['styleguide_wwp_modern']),
                     $this->equalTo(null),
                 ],
                 [
@@ -65,37 +43,13 @@ class PackageAssetEnqueurTest extends AbstractEnqueurTest
                     $this->equalTo('http://wdf-base.test/fixtures/modern/css/styleguide.1e306c4a.css'),
                     $this->equalTo([]),
                     $this->equalTo(null),
-                ],
-                [
-                    $this->equalTo('map_wwp_legacy'),
-                    $this->equalTo('http://wdf-base.test/fixtures/legacy/css/map.906640f3.css'),
-                    $this->equalTo([]),
-                    $this->equalTo(null),
-                ],
-                [
-                    $this->equalTo('map_wwp_modern'),
-                    $this->equalTo('http://wdf-base.test/fixtures/modern/css/map.fd3a77e9.css'),
-                    $this->equalTo([]),
-                    $this->equalTo(null),
                 ]
             );
 
         $this->wordpressAssetGatewayMock
-            ->expects($this->exactly(8))
+            ->expects($this->exactly(4))
             ->method('registerScript')
             ->withConsecutive(
-                [
-                    $this->equalTo('vendor_wwp_legacy'),
-                    $this->equalTo('http://wdf-base.test/fixtures/legacy/js/vendor.dfc2b3d9.js'),
-                    $this->equalTo([]),
-                    $this->equalTo(null),
-                ],
-                [
-                    $this->equalTo('vendor_wwp_modern'),
-                    $this->equalTo('http://wdf-base.test/fixtures/modern/js/vendor.8e9031a4.js'),
-                    $this->equalTo([]),
-                    $this->equalTo(null),
-                ],
                 [
                     $this->equalTo('admin_wwp_legacy'),
                     $this->equalTo('http://wdf-base.test/fixtures/legacy/js/admin.8f300f60.js'),
@@ -142,12 +96,10 @@ class PackageAssetEnqueurTest extends AbstractEnqueurTest
             [$legacyPackage, $modernPackage]
         );
 
-        $stub = $this->getStub($packages);
-        $stub->register();
-
+        $this->getEnqueuer($packages);
     }
 
-    public function testEnqueueStyles()
+    public function testEnqueueStyleGroupsShouldCallWordpressEnqueueStyleWithCorrectArgs()
     {
         $legacyPackage = $this->getLegacyPackage();
 
@@ -155,7 +107,7 @@ class PackageAssetEnqueurTest extends AbstractEnqueurTest
             [$legacyPackage]
         );
 
-        $stub = $this->getStub($packages);
+        $stub = $this->getEnqueuer($packages);
 
         $this->wordpressAssetGatewayMock->expects($this->once())
             ->method('enqueueStyle')
@@ -164,7 +116,7 @@ class PackageAssetEnqueurTest extends AbstractEnqueurTest
         $stub->enqueueStyleGroups(['styleguide']);
     }
 
-    public function testEnqueueScript()
+    public function testEnqueueScriptGroupsShouldCallWordpressEnqueueScriptWithCorrectArgs()
     {
         $legacyPackage = $this->getLegacyPackage();
 
@@ -172,7 +124,7 @@ class PackageAssetEnqueurTest extends AbstractEnqueurTest
             [$legacyPackage]
         );
 
-        $stub = $this->getStub($packages);
+        $stub = $this->getEnqueuer($packages);
 
         $this->wordpressAssetGatewayMock->expects($this->once())
             ->method('enqueueScript')
@@ -183,7 +135,7 @@ class PackageAssetEnqueurTest extends AbstractEnqueurTest
         $stub->enqueueScriptGroups(['vendor']);
     }
 
-    public function testEnqueueScriptWithMultipleGroups()
+    public function testEnqueueScriptWithMultipleGroupsShouldCallWordpressEnqueueScriptWithCorrectArgs()
     {
         $legacyPackage = $this->getLegacyPackage();
 
@@ -191,7 +143,7 @@ class PackageAssetEnqueurTest extends AbstractEnqueurTest
             [$legacyPackage]
         );
 
-        $stub = $this->getStub($packages);
+        $stub = $this->getEnqueuer($packages);
 
         $this->wordpressAssetGatewayMock->expects($this->exactly(2))
             ->method('enqueueScript')
@@ -207,7 +159,7 @@ class PackageAssetEnqueurTest extends AbstractEnqueurTest
         $stub->enqueueScriptGroups(['styleguide', 'plugins']);
     }
 
-    public function testEnqueueScriptWithMultiplePackageAndGroups()
+    public function testEnqueueScriptWithMultiplePackageAndGroupsShouldCallWordpressEnqueueScriptWithCorrectArgs()
     {
         $legacyPackage = $this->getLegacyPackage();
 
@@ -217,7 +169,7 @@ class PackageAssetEnqueurTest extends AbstractEnqueurTest
             [$legacyPackage, $modernPackage]
         );
 
-        $stub = $this->getStub($packages);
+        $stub = $this->getEnqueuer($packages);
 
         $this->wordpressAssetGatewayMock->expects($this->exactly(4))
             ->method('enqueueScript')
@@ -239,7 +191,7 @@ class PackageAssetEnqueurTest extends AbstractEnqueurTest
         $stub->enqueueScriptGroups(['styleguide', 'plugins']);
     }
 
-    public function testEnqueueStylesByAssetType()
+    public function testEnqueueStylesByAssetTypeShouldEnqueueCorrectAsset()
     {
         $legacyPackage = new AssetPackage(
             'legacy',
@@ -265,7 +217,7 @@ class PackageAssetEnqueurTest extends AbstractEnqueurTest
             [$legacyPackage, $modernPackage]
         );
 
-        $stub = $this->getStub($packages);
+        $stub = $this->getEnqueuer($packages);
 
         $this->wordpressAssetGatewayMock->expects($this->once())
             ->method('enqueueStyle')
@@ -276,7 +228,7 @@ class PackageAssetEnqueurTest extends AbstractEnqueurTest
         $stub->enqueueStyleGroups(['styleguide']);
     }
 
-    public function testInlineStyle()
+    public function testInlineStyleShouldReturnCorrectAssetContent()
     {
         $legacyPackage = $this->getLegacyPackage();
 
@@ -284,12 +236,12 @@ class PackageAssetEnqueurTest extends AbstractEnqueurTest
             [$legacyPackage]
         );
 
-        $stub = $this->getStub($packages);
+        $stub = $this->getEnqueuer($packages);
 
         $this->assertEquals(file_get_contents(__DIR__ . '/fixtures/legacy/css/styleguide.345d3412.css'), $stub->inlineStyle('styleguide'));
     }
 
-    public function testInlineScript()
+    public function testInlineStyleGroupsShouldReturnCorrectAssetContent()
     {
         $legacyPackage = $this->getLegacyPackage();
 
@@ -299,9 +251,45 @@ class PackageAssetEnqueurTest extends AbstractEnqueurTest
             [$legacyPackage, $modernPackage]
         );
 
-        $stub = $this->getStub($packages);
+        $stub = $this->getEnqueuer($packages);
+
+        $expected = file_get_contents(__DIR__ . '/fixtures/legacy/css/styleguide.345d3412.css');
+        $expected .= file_get_contents(__DIR__ . '/fixtures/legacy/css/admin.3401c219.css');
+
+        $this->assertEquals($expected, $stub->inlineStyleGroups(['styleguide', 'admin']));
+    }
+
+    public function testInlineScriptShouldReturnCorrectAssetContent()
+    {
+        $legacyPackage = $this->getLegacyPackage();
+
+        $modernPackage = $this->getModernPackage();
+
+        $packages = new AssetPackages(
+            [$legacyPackage, $modernPackage]
+        );
+
+        $stub = $this->getEnqueuer($packages);
 
         $this->assertEquals(file_get_contents(__DIR__ . '/fixtures/legacy/js/styleguide.6a5b0114.js'), $stub->inlineScript('styleguide'));
+    }
+
+    public function testInlineScriptGroupsShouldReturnCorrectAssetContent()
+    {
+        $legacyPackage = $this->getLegacyPackage();
+
+        $modernPackage = $this->getModernPackage();
+
+        $packages = new AssetPackages(
+            [$legacyPackage, $modernPackage]
+        );
+
+        $stub = $this->getEnqueuer($packages);
+
+        $expected = file_get_contents(__DIR__ . '/fixtures/legacy/js/styleguide.6a5b0114.js');
+        $expected .= file_get_contents(__DIR__ . '/fixtures/legacy/js/admin.8f300f60.js');
+
+        $this->assertEquals($expected, $stub->inlineScriptGroups(['styleguide', 'admin']));
     }
 
     /**
@@ -309,7 +297,7 @@ class PackageAssetEnqueurTest extends AbstractEnqueurTest
      */
     private function getLegacyPackage(): AssetPackage
     {
-        $legacyPackage = new AssetPackage(
+        return new AssetPackage(
             'legacy',
             new JsonManifestVersionStrategy(__DIR__ . '/fixtures/manifest.json'),
             [
@@ -317,7 +305,6 @@ class PackageAssetEnqueurTest extends AbstractEnqueurTest
                 'basePath' => '/fixtures/legacy',
             ]
         );
-        return $legacyPackage;
     }
 
     /**
@@ -325,7 +312,7 @@ class PackageAssetEnqueurTest extends AbstractEnqueurTest
      */
     private function getModernPackage(): AssetPackage
     {
-        $modernPackage = new AssetPackage(
+        return new AssetPackage(
             'modern',
             new JsonManifestVersionStrategy(__DIR__ . '/fixtures/manifest-second.json'),
             [
@@ -333,6 +320,5 @@ class PackageAssetEnqueurTest extends AbstractEnqueurTest
                 'basePath' => '/fixtures/modern'
             ]
         );
-        return $modernPackage;
     }
 }

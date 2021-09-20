@@ -4,12 +4,16 @@ namespace WonderWp\Component\Asset;
 
 abstract class AbstractAssetEnqueuer implements AssetEnqueuerInterface
 {
-    public $assetManager;
+    /** @var AssetManager */
+    protected $assetManager;
+    /** @var \WP_Filesystem_Direct */
+    protected $filesystem;
 
     /** Constructor */
-    public function __construct(AssetManager $assetManager)
+    public function __construct(AssetManager $assetManager, $filesystem)
     {
         $this->assetManager = $assetManager;
+        $this->filesystem = $filesystem;
     }
 
     /** @inheritdoc */
@@ -93,9 +97,17 @@ abstract class AbstractAssetEnqueuer implements AssetEnqueuerInterface
         $scripts = '';
 
         foreach ($groupNames as $groupName) {
-            $scripts .= $this->inlineStyleGroup($groupName);
+            $scripts .= $this->inlineScriptGroup($groupName);
         }
 
         return $scripts;
+    }
+
+    /**
+     * @param AssetManager $assetManager
+     */
+    public function setAssetManager(AssetManager $assetManager): void
+    {
+        $this->assetManager = $assetManager;
     }
 }

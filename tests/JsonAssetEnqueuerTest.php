@@ -4,17 +4,30 @@ namespace WonderWp\Component\Asset\Tests;
 
 use WonderWp\Component\Asset\JsonAssetEnqueuer;
 
-class JsonAssetEnqueurTest extends AbstractEnqueurTest
+class JsonAssetEnqueuerTest extends AbstractEnqueuerTest
 {
+    /**
+     * @var JsonAssetEnqueuer
+     */
+    private $enqueuer;
+
     protected function setUp(): void
     {
         parent::setUp();
-        $_SERVER["HTTP_HOST"] = 'wdf-base.test';
-        $_SERVER['DOCUMENT_ROOT'] = __DIR__;
+
+        // Set publicPath to test dir to resolve asset location
+        $publicPath = __DIR__;
+
+        // Hard code blog url
+        $blogUrl = 'http://wdf-base.test';
+
+        $this->enqueuer = new JsonAssetEnqueuer($this->assetManager, new WP_Filesystem_Direct(), __DIR__ . '/fixtures/assets.json', $publicPath, $blogUrl, $this->wordpressAssetGatewayMock);
     }
 
-    public function testRegister()
+    public function testRegisterShouldCallWordpressRegisterWithCorrectArgs()
     {
+        // Register the expected behavior before create a new instance of DirectAssetEnqueuer
+        // because tested method are run inside constructor (registerStyle/registerScript)
         $this->wordpressAssetGatewayMock
             ->expects($this->exactly(3))
             ->method('registerStyle')
@@ -40,15 +53,9 @@ class JsonAssetEnqueurTest extends AbstractEnqueurTest
             );
 
         $this->wordpressAssetGatewayMock
-            ->expects($this->exactly(6))
+            ->expects($this->exactly(5))
             ->method('registerScript')
             ->withConsecutive(
-                [
-                    $this->equalTo('vendor'),
-                    $this->equalTo('http://wdf-base.test/fixtures/dist/js/vendor1629206406688.js'),
-                    $this->equalTo([]),
-                    $this->equalTo(null),
-                ],
                 [
                     $this->equalTo('styleguide'),
                     $this->equalTo('http://wdf-base.test/fixtures/dist/js/styleguide1629206406688.js'),
@@ -81,38 +88,31 @@ class JsonAssetEnqueurTest extends AbstractEnqueurTest
                 ]
             );
 
-        new JsonAssetEnqueuer($this->assetManager, __DIR__ . '/fixtures/assets.json', '/fixtures/dist', '', $this->wordpressAssetGatewayMock);
+        new JsonAssetEnqueuer($this->assetManager, new WP_Filesystem_Direct(), __DIR__ . '/fixtures/assets.json', __DIR__, 'http://wdf-base.test', $this->wordpressAssetGatewayMock);
     }
 
-    public function testEnqueueStyle()
+    public function testEnqueueStyleShouldCallWordpressEnqueueStyleWithCorrectArgs()
     {
-
         $this->wordpressAssetGatewayMock
             ->expects($this->once())
             ->method('enqueueStyle')
             ->with('styleguide');
 
-        $enqueuer = new JsonAssetEnqueuer($this->assetManager, __DIR__ . '/fixtures/assets.json', '/fixtures/dist', '', $this->wordpressAssetGatewayMock);
-
-        $enqueuer->enqueueStyle('styleguide');
+        $this->enqueuer->enqueueStyle('styleguide');
     }
 
-    public function testEnqueueScript()
+    public function testEnqueueScriptShouldCallWordpressEnqueueScriptWithCorrectArgs()
     {
-
         $this->wordpressAssetGatewayMock
             ->expects($this->once())
             ->method('enqueueScript')
             ->with('styleguide');
 
-        $enqueuer = new JsonAssetEnqueuer($this->assetManager, __DIR__ . '/fixtures/assets.json', '/fixtures/dist', '', $this->wordpressAssetGatewayMock);
-
-        $enqueuer->enqueueScript('styleguide');
+        $this->enqueuer->enqueueScript('styleguide');
     }
 
-    public function testEnqueueStyleGroups()
+    public function testEnqueueStyleGroupsShouldCallWordpressEnqueueStyleWithCorrectArgs()
     {
-
         $this->wordpressAssetGatewayMock
             ->expects($this->exactly(2))
             ->method('enqueueStyle')
@@ -125,14 +125,11 @@ class JsonAssetEnqueurTest extends AbstractEnqueurTest
                 ]
             );
 
-        $enqueuer = new JsonAssetEnqueuer($this->assetManager, __DIR__ . '/fixtures/assets.json', '/fixtures/dist', '', $this->wordpressAssetGatewayMock);
-
-        $enqueuer->enqueueStyleGroups(['styleguide', 'admin']);
+        $this->enqueuer->enqueueStyleGroups(['styleguide', 'admin']);
     }
 
-    public function testEnqueueScriptGroups()
+    public function testEnqueueScriptGroupsShouldCallWordpressEnqueueScriptWithCorrectArgs()
     {
-
         $this->wordpressAssetGatewayMock
             ->expects($this->exactly(2))
             ->method('enqueueScript')
@@ -145,22 +142,42 @@ class JsonAssetEnqueurTest extends AbstractEnqueurTest
                 ]
             );
 
-        $enqueuer = new JsonAssetEnqueuer($this->assetManager, __DIR__ . '/fixtures/assets.json', '/fixtures/dist', '', $this->wordpressAssetGatewayMock);
-
-        $enqueuer->enqueueScriptGroups(['styleguide', 'admin']);
+        $this->enqueuer->enqueueScriptGroups(['styleguide', 'admin']);
     }
 
-    public function testInlineStyle()
+    public function testInlineStyleShouldReturnCorrectAssetContent()
     {
-        $enqueuer = new JsonAssetEnqueuer($this->assetManager, __DIR__ . '/fixtures/assets.json', '/fixtures/dist', '', $this->wordpressAssetGatewayMock);
-
-        $this->assertEquals(file_get_contents(__DIR__ . '/fixtures/dist/css/styleguide1629206406688.css'), $enqueuer->inlineStyle('styleguide'));
+        $this->assertEquals(file_get_contents(__DIR__ . '/fixtures/dist/css/styleguide1629206406688.css'), $this->enqueuer->inlineStyle('styleguide'));
     }
 
-    public function testInlineScript()
+    public function testInlineScriptShouldReturnCorrectAssetContent()
     {
-        $enqueuer = new JsonAssetEnqueuer($this->assetManager, __DIR__ . '/fixtures/assets.json', '/fixtures/dist', '', $this->wordpressAssetGatewayMock);
+        $this->assertEquals(file_get_contents(__DIR__ . '/fixtures/dist/js/styleguide1629206406688.js'), $this->enqueuer->inlineScript('styleguide'));
+    }
 
-        $this->assertEquals(file_get_contents(__DIR__ . '/fixtures/dist/js/styleguide1629206406688.js'), $enqueuer->inlineScript('styleguide'));
+    public function testInlineStyleGroupShouldReturnCorrectAssetContent()
+    {
+        $this->assertEquals(file_get_contents(__DIR__ . '/fixtures/dist/css/styleguide1629206406688.css'), $this->enqueuer->inlineStyle('styleguide'));
+    }
+
+    public function testInlineScriptGroupShouldReturnCorrectAssetContent()
+    {
+        $this->assertEquals(file_get_contents(__DIR__ . '/fixtures/dist/js/styleguide1629206406688.js'), $this->enqueuer->inlineScript('styleguide'));
+    }
+
+    public function testInlineStyleGroupsShouldReturnCorrectAssetContent()
+    {
+        $expected = file_get_contents(__DIR__.'/fixtures/dist/css/styleguide1629206406688.css');
+        $expected .= file_get_contents(__DIR__.'/fixtures/dist/css/admin1629206406688.css');
+
+        $this->assertEquals($expected, $this->enqueuer->inlineStyleGroups(['styleguide', 'admin']));
+    }
+
+    public function testInlineScriptGroupsShouldReturnCorrectAssetContent()
+    {
+        $expected = file_get_contents(__DIR__.'/fixtures/dist/js/styleguide1629206406688.js');
+        $expected .= file_get_contents(__DIR__.'/fixtures/dist/js/admin1629206406688.js');
+
+        $this->assertEquals($expected, $this->enqueuer->inlineScriptGroups(['styleguide', 'admin']));
     }
 }
