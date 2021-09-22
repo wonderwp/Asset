@@ -12,26 +12,34 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     protected $version;
     /** @var string */
     private $publicPath;
-    /**
-     * @var WordpressAssetGateway
-     */
+    /** @var WordpressAssetGateway */
     private $wordpressAssetGateway;
+    /** @var \WP_Filesystem_Base */
+    private $filesystem;
 
     /**
      * @param AssetManager $assetManager
+     * @param \WP_Filesystem_Base $filesystem
      * @param string $manifestPath
      * @param string $publicPath Path to asset location
      * @param string $blogUrl Website url
      * @param WordpressAssetGateway|null $wordpressAssetGateway
+     * @throws \Exception
      */
     public function __construct(AssetManager $assetManager, $filesystem, string $manifestPath, string $publicPath, string $blogUrl, WordpressAssetGateway $wordpressAssetGateway = null)
     {
-        parent::__construct($assetManager, $filesystem);
+        parent::__construct($assetManager);
 
         if ($wordpressAssetGateway === null) {
             $this->wordpressAssetGateway = new WordpressAssetGateway();
         } else {
             $this->wordpressAssetGateway = $wordpressAssetGateway;
+        }
+
+        $this->filesystem = $filesystem;
+
+        if (!$this->filesystem->exists($manifestPath)) {
+            throw new \Exception('File manifest does not exist');
         }
 
         $this->manifest = json_decode($this->filesystem->get_contents($manifestPath));
@@ -74,6 +82,8 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
             }
         }
 
+        $cssToRegister = $this->wordpressAssetGateway->applyFilters('wwp.enqueuer.register.cssToRegister', $cssToRegister, $this);
+
         foreach ($cssToRegister as $cssAsset) {
             $this->wordpressAssetGateway->registerStyle($cssAsset['handle'], $cssAsset['src'], $cssAsset['deps'], $cssAsset['ver'], $cssAsset['media']);
         }
@@ -100,6 +110,8 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
                 ];
             }
         }
+
+        $jsToRegister = $this->wordpressAssetGateway->applyFilters('wwp.enqueuer.register.jsToRegister', $jsToRegister, $this);
 
         foreach ($jsToRegister as $jsAsset) {
             $this->wordpressAssetGateway->registerScript($jsAsset['handle'], $jsAsset['src'], $jsAsset['deps'], $jsAsset['ver'], $jsAsset['in_footer']);

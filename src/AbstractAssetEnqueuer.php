@@ -6,14 +6,11 @@ abstract class AbstractAssetEnqueuer implements AssetEnqueuerInterface
 {
     /** @var AssetManager */
     protected $assetManager;
-    /** @var \WP_Filesystem_Direct */
-    protected $filesystem;
 
     /** Constructor */
-    public function __construct(AssetManager $assetManager, $filesystem)
+    public function __construct(AssetManager $assetManager)
     {
         $this->assetManager = $assetManager;
-        $this->filesystem = $filesystem;
     }
 
     /** @inheritdoc */

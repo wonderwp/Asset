@@ -1,10 +1,6 @@
 <?php
 
-
 namespace WonderWp\Component\Asset;
-
-
-use WP_Filesystem_Direct;
 
 class PackageAssetEnqueuer extends AbstractAssetEnqueuer
 {
@@ -14,21 +10,22 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
     private $packages;
     private $blogUrl;
     private $publicPath;
-    /**
-     * @var WordpressAssetGateway
-     */
+    /** @var WordpressAssetGateway */
     private $wordpressAssetGateway;
+    /** @var \WP_Filesystem_Base */
+    private $filesystem;
+
     /**
      * @param AssetManager $assetManager
+     * @param \WP_Filesystem_Base $filesystem
      * @param AssetPackages $packages
      * @param string $publicPath
      * @param string $blogUrl
      * @param WordpressAssetGateway|null $wordpressAssetGateway
-     * @param null|mixed $filesystem
      */
     public function __construct(AssetManager $assetManager, $filesystem, AssetPackages $packages, string $publicPath, string $blogUrl, WordpressAssetGateway $wordpressAssetGateway = null)
     {
-        parent::__construct($assetManager, $filesystem);
+        parent::__construct($assetManager);
 
 
         if ($wordpressAssetGateway === null) {
@@ -36,6 +33,8 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
         } else {
             $this->wordpressAssetGateway = $wordpressAssetGateway;
         }
+
+        $this->filesystem = $filesystem;
 
         $this->setBlogUrl($blogUrl);
         $this->initPackages($packages);
@@ -106,7 +105,6 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
             /** @var AssetPackage $package */
             $this->wordpressAssetGateway->enqueueScript($this->getHandleName($groupName, $package));
         }
-
     }
 
     /** @inheritDoc */

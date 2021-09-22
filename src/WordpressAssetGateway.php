@@ -32,4 +32,8 @@ class WordpressAssetGateway
     public function isAdmin(...$args) {
         return \is_admin(...$args);
     }
+
+    public function wpRemoteGet(...$args) {
+        return \wp_remote_get(...$args);
+    }
 }

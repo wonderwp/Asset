@@ -5,20 +5,20 @@ namespace WonderWp\Component\Asset;
 class DirectAssetEnqueuer extends AbstractAssetEnqueuer
 {
     private $publicPath;
-    /**
-     * @var WordpressAssetGateway
-     */
+    /** @var WordpressAssetGateway */
     private $wordpressAssetGateway;
+    /** @var \WP_Filesystem_Base */
+    private $filesystem;
 
     /**
      * @param AssetManager $assetManager
      * @param string $publicPath Path to asset location
      * @param WordpressAssetGateway|null $wordpressAssetGateway
-     * @param null $filesystem
+     * @param \WP_Filesystem_Base $filesystem
      */
     public function __construct(AssetManager $assetManager, $filesystem, string $publicPath, WordpressAssetGateway $wordpressAssetGateway = null)
     {
-        parent::__construct($assetManager, $filesystem);
+        parent::__construct($assetManager);
 
         $this->assetManager->callServices();
         $this->publicPath = $publicPath;
@@ -28,6 +28,7 @@ class DirectAssetEnqueuer extends AbstractAssetEnqueuer
             $this->wordpressAssetGateway = $wordpressAssetGateway;
         }
 
+        $this->filesystem = $filesystem;
         $this->register();
     }
 
@@ -54,7 +55,7 @@ class DirectAssetEnqueuer extends AbstractAssetEnqueuer
             ];
         }
 
-        $cssToRegister = $this->wordpressAssetGateway->applyFilters('wwp.enqueuer.register.cssAssets', $cssToRegister, $this);
+        $cssToRegister = $this->wordpressAssetGateway->applyFilters('wwp.enqueuer.register.cssToRegister', $cssToRegister, $this);
 
         foreach ($cssToRegister as $cssAsset) {
             $this->wordpressAssetGateway->registerStyle($cssAsset['handle'], $cssAsset['src'], $cssAsset['deps'], $cssAsset['ver'], $cssAsset['media'] ?? null);
@@ -75,7 +76,7 @@ class DirectAssetEnqueuer extends AbstractAssetEnqueuer
             ];
         }
 
-        $jsToRegister = $this->wordpressAssetGateway->applyFilters('wwp.enqueuer.register.jsAssets', $jsToRegister, $this);
+        $jsToRegister = $this->wordpressAssetGateway->applyFilters('wwp.enqueuer.register.jsToRegister', $jsToRegister, $this);
 
         foreach ($jsToRegister as $jsAsset) {
             $this->wordpressAssetGateway->registerScript($jsAsset['handle'], $jsAsset['src'], $jsAsset['deps'], $jsAsset['ver'], $jsAsset['in_footer'] ?? null);
@@ -183,7 +184,12 @@ class DirectAssetEnqueuer extends AbstractAssetEnqueuer
     private function getAssetContent(Asset $dep)
     {
         if ($this->isAbsoluteUrl($dep->src)) {
-            return file_get_contents($dep->src);
+            $content = $this->wordpressAssetGateway->wpRemoteGet($dep->src);
+            if (!$content instanceof \WP_Error) {
+                return $content['response'];
+            }
+
+            return false;
         }
 
         return $this->filesystem->get_contents($this->publicPath . DIRECTORY_SEPARATOR . $dep->src);
