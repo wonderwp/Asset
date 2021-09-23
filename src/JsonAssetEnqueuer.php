@@ -69,6 +69,8 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
      */
     private function register(): void
     {
+        $this->assetManager->callServices();
+
         $this->registerStyles();
         $this->registerScripts();
     }
@@ -151,7 +153,7 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritdoc */
     public function enqueueStyleGroup(string $groupName)
     {
-        $this->enqueueStyle($groupName);
+        $this->wordpressAssetGateway->enqueueStyle($groupName);
 
         return $this;
     }
@@ -159,7 +161,7 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritdoc */
     public function enqueueScriptGroup(string $groupName)
     {
-        $this->enqueueScript($groupName);
+        $this->wordpressAssetGateway->enqueueScript($groupName);
 
         return $this;
     }
@@ -167,7 +169,11 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritDoc */
     public function enqueueStyle(string $handle)
     {
-        $this->wordpressAssetGateway->enqueueStyle($handle);
+        $asset = $this->assetManager->getDependency('css', $handle);
+
+        if ($asset) {
+            $this->enqueueStyleGroup($asset->concatGroup);
+        }
 
         return $this;
     }
@@ -175,7 +181,11 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritDoc */
     public function enqueueScript(string $handle)
     {
-        $this->wordpressAssetGateway->enqueueScript($handle);
+        $asset = $this->assetManager->getDependency('js', $handle);
+
+        if ($asset) {
+            $this->enqueueScriptGroup($asset->concatGroup);
+        }
 
         return $this;
     }
@@ -183,8 +193,20 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritDoc */
     public function inlineStyle(string $handle)
     {
-        if ($this->doesPropertyExistInManifest('css', $handle)) {
-            $src = $this->getPathFrom('css', $handle);
+        $asset = $this->assetManager->getDependency('css', $handle);
+
+        if ($asset) {
+            return $this->inlineStyleGroup($asset->concatGroup);
+        }
+
+        return '';
+    }
+
+    /** @inheritDoc */
+    public function inlineStyleGroup(string $groupName)
+    {
+        if ($this->doesPropertyExistInManifest('css', $groupName)) {
+            $src = $this->getPathFrom('css', $groupName);
 
             if ($this->filesystem->exists($src)) {
                 return $this->wordpressAssetGateway->applyFilters('wwp.enqueuer.inline.css.content', $this->filesystem->get_contents($src), $this);
@@ -195,21 +217,12 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     }
 
     /** @inheritDoc */
-    public function inlineStyleGroup(string $groupName)
+    public function inlineScript(string $handle): string
     {
-        return $this->inlineStyle($groupName);
-    }
+        $asset = $this->assetManager->getDependency('js', $handle);
 
-    /** @inheritDoc */
-    public function inlineScript(string $handle)
-    {
-        if ($this->doesPropertyExistInManifest('js', $handle)) {
-
-            $src = $this->getPathFrom('js', $handle);
-
-            if ($this->filesystem->exists($src)) {
-                return $this->wordpressAssetGateway->applyFilters('wwp.enqueuer.inline.js.content', $this->filesystem->get_contents($src), $this);
-            }
+        if ($asset) {
+            return $this->inlineScriptGroup($asset->concatGroup);
         }
 
         return '';
@@ -218,7 +231,16 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritDoc */
     public function inlineScriptGroup(string $groupName): string
     {
-        return $this->inlineScript($groupName);
+        if ($this->doesPropertyExistInManifest('js', $groupName)) {
+
+            $src = $this->getPathFrom('js', $groupName);
+
+            if ($this->filesystem->exists($src)) {
+                return $this->wordpressAssetGateway->applyFilters('wwp.enqueuer.inline.js.content', $this->filesystem->get_contents($src), $this);
+            }
+        }
+
+        return '';
     }
 
     /**
@@ -258,7 +280,23 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
      */
     protected function getSrcFrom(string $type, string $group): string
     {
-        return $this->manifest->site->assets_dest . '/' . $type . '/' . $group . $this->version . '.' . $type;
+        $pattern = '{assets_dest}/{type}/{group}{version}.{type}';
+
+        $search = [
+            '{assets_dest}',
+            '{type}',
+            '{group}',
+            '{version}'
+        ];
+
+        $replace = [
+            $this->manifest->site->assets_dest,
+            $type,
+            $group,
+            $this->version
+        ];
+
+        return str_replace($search, $replace, $pattern);
     }
 
     /**

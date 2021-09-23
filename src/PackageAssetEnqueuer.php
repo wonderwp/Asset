@@ -147,7 +147,11 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritDoc */
     public function enqueueStyle(string $handle)
     {
-        $this->wordpressAssetGateway->enqueueStyle($handle);
+        $asset = $this->assetManager->getDependency('css', $handle);
+
+        if ($asset) {
+            $this->enqueueStyleGroup($asset->concatGroup);
+        }
 
         return $this;
     }
@@ -155,7 +159,11 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritDoc */
     public function enqueueScript(string $handle)
     {
-        $this->wordpressAssetGateway->enqueueScript($handle);
+        $asset = $this->assetManager->getDependency('js', $handle);
+
+        if ($asset) {
+            $this->enqueueScriptGroup($asset->concatGroup);
+        }
 
         return $this;
     }
@@ -163,8 +171,20 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritDoc */
     public function inlineStyle(string $handle)
     {
+        $asset = $this->assetManager->getDependency('css', $handle);
+
+        if ($asset) {
+            return $this->inlineStyleGroup($asset->concatGroup);
+        }
+
+        return '';
+    }
+
+    /** @inheritDoc */
+    public function inlineStyleGroup(string $groupName)
+    {
         $packages = $this->wordpressAssetGateway->applyFilters(
-            'wwp.enqueuer.inlineStyle.packages',
+            'wwp.enqueuer.inlineStyleGroup.packages',
             $this->packages->getPackages(),
             $this
         );
@@ -173,7 +193,7 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
 
         foreach ($packages as $package) {
             /** @var AssetPackage $package */
-            $path = $package->getFullPath('css/' . $handle . '.css');
+            $path = $package->getFullPath('css/' . $groupName . '.css');
             $src = $this->publicPath . $path;
 
             if ($this->filesystem->exists($src)) {
@@ -189,16 +209,22 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
     }
 
     /** @inheritDoc */
-    public function inlineStyleGroup(string $groupName)
+    public function inlineScript(string $handle): string
     {
-        return $this->inlineStyle($groupName);
+        $asset = $this->assetManager->getDependency('js', $handle);
+
+        if ($asset) {
+            return $this->inlineScriptGroup($asset->concatGroup);
+        }
+
+
+        return '';
     }
 
-    /** @inheritDoc */
-    public function inlineScript(string $handle)
+    public function inlineScriptGroup(string $groupName): string
     {
         $packages = $this->wordpressAssetGateway->applyFilters(
-            'wwp.enqueuer.inlineScript.packages',
+            'wwp.enqueuer.inlineScriptGroup.packages',
             $this->packages->getPackages(),
             $this
         );
@@ -206,7 +232,7 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
         $inline = '';
 
         foreach ($packages as $package) {
-            $path = $package->getFullPath('js/' . $handle . '.js');
+            $path = $package->getFullPath('js/' . $groupName . '.js');
             $src = $this->publicPath . $path;
 
             if ($this->filesystem->exists($src)) {
@@ -219,11 +245,6 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
         }
 
         return $inline;
-    }
-
-    public function inlineScriptGroup(string $groupName)
-    {
-        return $this->inlineScript($groupName);
     }
 
     /**
@@ -245,7 +266,7 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
      */
     protected function getHandleName($group, string $packageName): string
     {
-        return $group . '_wwp_' . $packageName;
+        return 'wwp_' . $packageName . '_' . $group;
     }
 
     /**
