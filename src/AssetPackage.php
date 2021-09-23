@@ -3,48 +3,21 @@
 
 namespace WonderWp\Component\Asset;
 
-use LogicException;
 use Symfony\Component\Asset\Package;
 use Symfony\Component\Asset\VersionStrategy\VersionStrategyInterface;
-use WonderWp\Component\Asset\Exception\AssetPackageAvailableGroupsException;
 
 class AssetPackage extends Package
 {
-    private $name;
     private $baseUrl;
     private $basePath;
-    private $availableAssetTypes = [];
-    private $concernedAssetTypes = [];
 
-    public function __construct($name, VersionStrategyInterface $versionStrategy, array $availableAssetTypes, array $opts = [])
+    public function __construct(VersionStrategyInterface $versionStrategy, array $opts = [])
     {
         parent::__construct($versionStrategy);
-
-        $this->name = $name;
-
-        $this->availableAssetTypes = $availableAssetTypes;
 
         $this->setBaseUrl(isset($opts['baseUrl']) ? $opts['baseUrl'] : null);
 
         $this->initBasePath($opts);
-
-        if (isset($opts['assetTypes'])) {
-            $containOnlyAuthorizedGroups = !count(array_diff($opts['assetTypes'], $this->availableAssetTypes));
-
-            if (!$containOnlyAuthorizedGroups) {
-                throw new AssetPackageAvailableGroupsException('You must provide asset group according to available groups : ' . join(', ', $this->availableAssetTypes));
-            }
-
-            $this->concernedAssetTypes = $opts['assetTypes'];
-        }
-    }
-
-    /**
-     * @return string
-     */
-    public function getName(): string
-    {
-        return $this->name;
     }
 
     /**
@@ -99,15 +72,6 @@ class AssetPackage extends Package
     public function getBaseUrl(): string
     {
         return $this->baseUrl;
-    }
-
-    /**
-     * @param string $assetType One into 'js', 'css', 'critical'
-     * @return bool
-     */
-    public function isAssetTypeConcerned(string $assetType): bool
-    {
-        return in_array($assetType, $this->concernedAssetTypes, true);
     }
 
     public function setBaseUrl($baseUrl)

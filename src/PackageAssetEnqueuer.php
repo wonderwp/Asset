@@ -54,19 +54,27 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
             $this
         );
 
+        $cssToRegister = [];
+
         foreach ($styleGroups as $group => $dependencies) {
-            foreach ($this->packages->getPackagesBy('css') as $package) {
-                $dependenciesNames = $this->computeDependencyArray($package, $dependencies);
+            foreach ($this->packages->getPackages() as $packageName => $package) {
+                $dependenciesNames = $this->computeDependencyArray($packageName, $dependencies);
 
                 /** @var $package AssetPackage */
-                $this->wordpressAssetGateway->registerStyle(
-                    $this->getHandleName($group, $package),
-                    $package->getUrl('css/' . $group . '.css'),
-                    $dependenciesNames,
-                    null
-                );
-
+                $cssToRegister[$this->getHandleName($group, $packageName)] = [
+                    'handle' => $this->getHandleName($group, $packageName),
+                    'src' => $package->getUrl('css/' . $group . '.css'),
+                    'deps' => $dependenciesNames,
+                    'ver' => null,
+                    'media' => null
+                ];
             }
+        }
+
+        $cssToRegister = $this->wordpressAssetGateway->applyFilters('wwp.enqueuer.register.cssToRegister', $cssToRegister, $this);
+
+        foreach ($cssToRegister as $cssAsset) {
+            $this->wordpressAssetGateway->registerStyle($cssAsset['handle'], $cssAsset['src'], $cssAsset['deps'], $cssAsset['ver'], $cssAsset['media']);
         }
     }
 
@@ -78,60 +86,98 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
             $this
         );
 
+        $jsToRegister = [];
+
         foreach ($scriptGroups as $group => $dependencies) {
-            foreach ($this->packages->getPackagesBy('js') as $package) {
-                $dependenciesNames = $this->computeDependencyArray($package, $dependencies);
+            foreach ($this->packages->getPackages() as $packageName => $package) {
+                $dependenciesNames = $this->computeDependencyArray($packageName, $dependencies);
 
                 /** @var $package AssetPackage */
-                $this->wordpressAssetGateway->registerScript(
-                    $this->getHandleName($group, $package),
-                    $package->getUrl('js/' . $group . '.js'),
-                    $dependenciesNames,
-                    null
-                );
+                $jsToRegister[$this->getHandleName($group, $packageName)] = [
+                    'handle' => $this->getHandleName($group, $packageName),
+                    'src' => $package->getUrl('js/' . $group . '.js'),
+                    'deps' => $dependenciesNames,
+                    'ver' => null,
+                    'in_footer' => true
+                ];
             }
+        }
+
+        $jsToRegister = $this->wordpressAssetGateway->applyFilters('wwp.enqueuer.register.jsToRegister', $jsToRegister, $this);
+
+        foreach ($jsToRegister as $jsAsset) {
+            $this->wordpressAssetGateway->registerScript($jsAsset['handle'], $jsAsset['src'], $jsAsset['deps'], $jsAsset['ver'], $jsAsset['in_footer']);
         }
     }
 
     /** @inheritDoc */
     public function enqueueStyleGroup(string $groupName)
     {
-        foreach ($this->packages->getPackagesBy('css') as $package) {
+        $packages = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.enqueueStyleGroup.packages',
+            $this->packages->getPackages(),
+            $this
+        );
+
+        foreach ($packages as $packageName => $package) {
             /** @var AssetPackage $package */
-            $this->wordpressAssetGateway->enqueueStyle($this->getHandleName($groupName, $package));
+            $this->wordpressAssetGateway->enqueueStyle($this->getHandleName($groupName, $packageName));
         }
+
+        return $this;
     }
 
     /** @inheritDoc */
     public function enqueueScriptGroup(string $groupName)
     {
-        foreach ($this->packages->getPackagesBy('js') as $package) {
+        $packages = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.enqueueScriptGroup.packages',
+            $this->packages->getPackages(),
+            $this
+        );
+
+        foreach ($packages as $packageName => $package) {
             /** @var AssetPackage $package */
-            $this->wordpressAssetGateway->enqueueScript($this->getHandleName($groupName, $package));
+            $this->wordpressAssetGateway->enqueueScript($this->getHandleName($groupName, $packageName));
         }
+
+        return $this;
     }
 
     /** @inheritDoc */
     public function enqueueStyle(string $handle)
     {
         $this->wordpressAssetGateway->enqueueStyle($handle);
+
+        return $this;
     }
 
     /** @inheritDoc */
     public function enqueueScript(string $handle)
     {
         $this->wordpressAssetGateway->enqueueScript($handle);
+
+        return $this;
     }
 
     /** @inheritDoc */
     public function inlineStyle(string $handle)
     {
-        foreach ($this->packages->getPackagesBy('critical') as $package) {
+        $packages = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.inlineStyle.packages',
+            $this->packages->getPackages(),
+            $this
+        );
+
+        $inline = '';
+
+        foreach ($packages as $package) {
+            /** @var AssetPackage $package */
             $path = $package->getFullPath('css/' . $handle . '.css');
             $src = $this->publicPath . $path;
 
             if ($this->filesystem->exists($src)) {
-                return $this->wordpressAssetGateway->applyFilters(
+                $inline .= $this->wordpressAssetGateway->applyFilters(
                     'wwp.enqueuer.inline.css.content',
                     $this->filesystem->get_contents($src),
                     $this
@@ -139,7 +185,7 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
             }
         }
 
-        return '';
+        return $inline;
     }
 
     /** @inheritDoc */
@@ -151,12 +197,20 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritDoc */
     public function inlineScript(string $handle)
     {
-        foreach ($this->packages->getPackagesBy('critical') as $package) {
+        $packages = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.inlineScript.packages',
+            $this->packages->getPackages(),
+            $this
+        );
+
+        $inline = '';
+
+        foreach ($packages as $package) {
             $path = $package->getFullPath('js/' . $handle . '.js');
             $src = $this->publicPath . $path;
 
             if ($this->filesystem->exists($src)) {
-                return $this->wordpressAssetGateway->applyFilters(
+                $inline .= $this->wordpressAssetGateway->applyFilters(
                     'wwp.enqueuer.inline.js.content',
                     $this->filesystem->get_contents($src),
                     $this
@@ -164,7 +218,7 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
             }
         }
 
-        return '';
+        return $inline;
     }
 
     public function inlineScriptGroup(string $groupName)
@@ -177,10 +231,10 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
      * @param $dependencies
      * @return array|string[]
      */
-    protected function computeDependencyArray(AssetPackage $package, $dependencies): array
+    protected function computeDependencyArray(string $packageName, $dependencies): array
     {
-        return array_map(function ($dependency) use ($package) {
-            return $this->getHandleName($dependency, $package);
+        return array_map(function ($dependency) use ($packageName) {
+            return $this->getHandleName($dependency, $packageName);
         }, $dependencies);
     }
 
@@ -189,9 +243,9 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
      * @param AssetPackage $package
      * @return string
      */
-    protected function getHandleName($group, AssetPackage $package): string
+    protected function getHandleName($group, string $packageName): string
     {
-        return $group . '_wwp_' . $package->getName();
+        return $group . '_wwp_' . $packageName;
     }
 
     /**

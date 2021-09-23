@@ -25,7 +25,7 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
      * @param string $manifestPath
      * @param string $publicPath Path to asset location
      * @param string $blogUrl Website url
-     * @param int $version
+     * @param $version
      * @param WordpressAssetGateway|null $wordpressAssetGateway
      * @throws MissingJsonManifestException
      */
@@ -35,7 +35,7 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
         string $manifestPath,
         string $publicPath,
         string $blogUrl,
-        int $version,
+        $version,
         WordpressAssetGateway $wordpressAssetGateway = null
     )
     {
@@ -222,19 +222,6 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     }
 
     /**
-     * @return int|null
-     */
-    public function getVersion(): ?int
-    {
-        if ($this->version === null) {
-            $fileVersion = $this->publicPath . $this->manifest->site->assets_dest . '/version.php';
-            $this->version = $this->filesystem->exists($fileVersion) ? include($fileVersion) : null;
-        }
-
-        return $this->version;
-    }
-
-    /**
      * @param string $type
      * @param string $group
      * @return bool
@@ -271,7 +258,7 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
      */
     protected function getSrcFrom(string $type, string $group): string
     {
-        return $this->manifest->site->assets_dest . '/' . $type . '/' . $group . $this->getVersion() . '.' . $type;
+        return $this->manifest->site->assets_dest . '/' . $type . '/' . $group . $this->version . '.' . $type;
     }
 
     /**

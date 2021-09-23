@@ -27,9 +27,9 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
             ->method('registerStyle')
             ->withConsecutive(
                 [
-                    $this->equalTo('admin_wwp_legacy'),
+                    $this->equalTo('admin_wwp_default'),
                     $this->equalTo('http://wdf-base.test/fixtures/legacy/css/admin.3401c219.css'),
-                    $this->equalTo(['styleguide_wwp_legacy']),
+                    $this->equalTo(['styleguide_wwp_default']),
                     $this->equalTo(null),
                 ],
                 [
@@ -39,7 +39,7 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
                     $this->equalTo(null),
                 ],
                 [
-                    $this->equalTo('styleguide_wwp_legacy'),
+                    $this->equalTo('styleguide_wwp_default'),
                     $this->equalTo('http://wdf-base.test/fixtures/legacy/css/styleguide.345d3412.css'),
                     $this->equalTo([]),
                     $this->equalTo(null),
@@ -57,9 +57,9 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
             ->method('registerScript')
             ->withConsecutive(
                 [
-                    $this->equalTo('admin_wwp_legacy'),
+                    $this->equalTo('admin_wwp_default'),
                     $this->equalTo('http://wdf-base.test/fixtures/legacy/js/admin.8f300f60.js'),
-                    $this->equalTo(['styleguide_wwp_legacy']),
+                    $this->equalTo(['styleguide_wwp_default']),
                     $this->equalTo(null),
                 ],
                 [
@@ -69,7 +69,7 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
                     $this->equalTo(null),
                 ],
                 [
-                    $this->equalTo('styleguide_wwp_legacy'),
+                    $this->equalTo('styleguide_wwp_default'),
                     $this->equalTo('http://wdf-base.test/fixtures/legacy/js/styleguide.6a5b0114.js'),
                     $this->equalTo([]),
                     $this->equalTo(null),
@@ -99,7 +99,8 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
         $modernPackage = $this->getModernPackage();
 
         $packages = new AssetPackages(
-            [$legacyPackage, $modernPackage]
+            $legacyPackage,
+            ['modern' => $modernPackage]
         );
 
         $this->getEnqueuer($packages);
@@ -110,14 +111,14 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
         $legacyPackage = $this->getLegacyPackage();
 
         $packages = new AssetPackages(
-            [$legacyPackage]
+            $legacyPackage
         );
 
         $stub = $this->getEnqueuer($packages);
 
         $this->wordpressAssetGatewayMock->expects($this->once())
             ->method('enqueueStyle')
-            ->with($this->equalTo('styleguide_wwp_legacy'));
+            ->with($this->equalTo('styleguide_wwp_default'));
 
         $stub->enqueueStyleGroups(['styleguide']);
     }
@@ -127,7 +128,7 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
         $legacyPackage = $this->getLegacyPackage();
 
         $packages = new AssetPackages(
-            [$legacyPackage]
+            $legacyPackage
         );
 
         $stub = $this->getEnqueuer($packages);
@@ -135,7 +136,7 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
         $this->wordpressAssetGatewayMock->expects($this->once())
             ->method('enqueueScript')
             ->with(
-                $this->equalTo('vendor_wwp_legacy')
+                $this->equalTo('vendor_wwp_default')
             );
 
         $stub->enqueueScriptGroups(['vendor']);
@@ -146,7 +147,7 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
         $legacyPackage = $this->getLegacyPackage();
 
         $packages = new AssetPackages(
-            [$legacyPackage]
+            $legacyPackage
         );
 
         $stub = $this->getEnqueuer($packages);
@@ -155,10 +156,10 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
             ->method('enqueueScript')
             ->withConsecutive(
                 [
-                    $this->equalTo('styleguide_wwp_legacy'),
+                    $this->equalTo('styleguide_wwp_default'),
                 ],
                 [
-                    $this->equalTo('plugins_wwp_legacy'),
+                    $this->equalTo('plugins_wwp_default'),
                 ]
             );
 
@@ -172,7 +173,8 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
         $modernPackage = $this->getModernPackage();
 
         $packages = new AssetPackages(
-            [$legacyPackage, $modernPackage]
+            null,
+            ['legacy' => $legacyPackage, 'modern' => $modernPackage]
         );
 
         $stub = $this->getEnqueuer($packages);
@@ -197,50 +199,12 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
         $stub->enqueueScriptGroups(['styleguide', 'plugins']);
     }
 
-    public function testEnqueueStylesByAssetTypeShouldEnqueueCorrectAsset()
-    {
-        $legacyPackage = new AssetPackage(
-            'legacy',
-            new JsonManifestVersionStrategy(__DIR__ . '/fixtures/manifest.json'),
-            ['js', 'css', 'critical'],
-            [
-                'baseUrl' => 'http://wdf-base.test',
-                'basePath' => '/fixtures/legacy',
-                'assetTypes' => ['js', 'css', 'critical']
-            ]
-        );
-
-        $modernPackage = new AssetPackage(
-            'modern',
-            new JsonManifestVersionStrategy(__DIR__ . '/fixtures/manifest-second.json'),
-            ['js', 'css', 'critical'],
-            [
-                'baseUrl' => 'http://wdf-base.test',
-                'basePath' => '/fixtures/modern',
-                'assetTypes' => ['js']
-            ]
-        );
-
-        $packages = new AssetPackages(
-            [$legacyPackage, $modernPackage]
-        );
-
-        $stub = $this->getEnqueuer($packages);
-
-        $this->wordpressAssetGatewayMock->expects($this->once())
-            ->method('enqueueStyle')
-            ->with(
-                $this->equalTo('styleguide_wwp_legacy')
-            );
-
-        $stub->enqueueStyleGroups(['styleguide']);
-    }
-
     public function testInlineStyleShouldReturnCorrectAssetContent()
     {
         $legacyPackage = $this->getLegacyPackage();
 
         $packages = new AssetPackages(
+            null,
             [$legacyPackage]
         );
 
@@ -256,6 +220,7 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
         $modernPackage = $this->getModernPackage();
 
         $packages = new AssetPackages(
+            null,
             [$legacyPackage, $modernPackage]
         );
 
@@ -273,7 +238,7 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
 
         $modernPackage = $this->getModernPackage();
 
-        $packages = new AssetPackages(
+        $packages = new AssetPackages(null,
             [$legacyPackage, $modernPackage]
         );
 
@@ -289,6 +254,7 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
         $modernPackage = $this->getModernPackage();
 
         $packages = new AssetPackages(
+            null,
             [$legacyPackage, $modernPackage]
         );
 
@@ -306,13 +272,10 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
     private function getLegacyPackage(): AssetPackage
     {
         return new AssetPackage(
-            'legacy',
             new JsonManifestVersionStrategy(__DIR__ . '/fixtures/manifest.json'),
-            ['js', 'css', 'critical'],
             [
                 'baseUrl' => 'http://wdf-base.test',
                 'basePath' => '/fixtures/legacy',
-                'assetTypes' => ['js', 'css', 'critical']
             ]
         );
     }
@@ -323,13 +286,10 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
     private function getModernPackage(): AssetPackage
     {
         return new AssetPackage(
-            'modern',
             new JsonManifestVersionStrategy(__DIR__ . '/fixtures/manifest-second.json'),
-            ['js', 'css', 'critical'],
             [
                 'baseUrl' => 'http://wdf-base.test',
                 'basePath' => '/fixtures/modern',
-                'assetTypes' => ['js', 'css', 'critical']
             ]
         );
     }
