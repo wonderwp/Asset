@@ -8,7 +8,6 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
      * @var AssetPackages
      */
     private $packages;
-    private $blogUrl;
     private $publicPath;
     /** @var WordpressAssetGateway */
     private $wordpressAssetGateway;
@@ -20,10 +19,9 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
      * @param \WP_Filesystem_Base $filesystem
      * @param AssetPackages $packages
      * @param string $publicPath
-     * @param string $blogUrl
      * @param WordpressAssetGateway|null $wordpressAssetGateway
      */
-    public function __construct(AssetManager $assetManager, $filesystem, AssetPackages $packages, string $publicPath, string $blogUrl, WordpressAssetGateway $wordpressAssetGateway = null)
+    public function __construct(AssetManager $assetManager, $filesystem, AssetPackages $packages, string $publicPath, WordpressAssetGateway $wordpressAssetGateway = null)
     {
         parent::__construct($assetManager);
 
@@ -35,30 +33,24 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
         }
 
         $this->filesystem = $filesystem;
-
-        $this->setBlogUrl($blogUrl);
-        $this->initPackages($packages);
+        $this->packages = $packages;
         $this->setPublicPath($publicPath);
         $this->register();
     }
 
-    public function initPackages($packages)
+    public function register()
     {
         $this->assetManager->callServices();
 
-        foreach ($packages->getPackages() as $package) {
-            /** @var AssetPackage $package */
-            $package->setBaseUrl($this->blogUrl);
-        }
-
-        $this->packages = $packages;
+        $this->registerStyles();
+        $this->registerScripts();
     }
 
-    public function register()
+    private function registerStyles(): void
     {
         $styleGroups = $this->wordpressAssetGateway->applyFilters(
             'wwp.enqueuer.register.cssAssets',
-            $this->assetManager->getDistinctGroups('css'),
+            $this->assetManager->getDistinctGroupsDependencies('css'),
             $this
         );
 
@@ -67,14 +59,22 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
                 $dependenciesNames = $this->computeDependencyArray($package, $dependencies);
 
                 /** @var $package AssetPackage */
-                $this->wordpressAssetGateway->registerStyle($this->getHandleName($group, $package), $package->getUrl('css/' . $group . '.css'), $dependenciesNames, null);
+                $this->wordpressAssetGateway->registerStyle(
+                    $this->getHandleName($group, $package),
+                    $package->getUrl('css/' . $group . '.css'),
+                    $dependenciesNames,
+                    null
+                );
 
             }
         }
+    }
 
+    private function registerScripts(): void
+    {
         $scriptGroups = $this->wordpressAssetGateway->applyFilters(
             'wwp.enqueuer.register.jsAssets',
-            $this->assetManager->getDistinctGroups('js'),
+            $this->assetManager->getDistinctGroupsDependencies('js'),
             $this
         );
 
@@ -83,8 +83,12 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
                 $dependenciesNames = $this->computeDependencyArray($package, $dependencies);
 
                 /** @var $package AssetPackage */
-                $this->wordpressAssetGateway->registerScript($this->getHandleName($group, $package), $package->getUrl('js/' . $group . '.js'), $dependenciesNames, null);
-
+                $this->wordpressAssetGateway->registerScript(
+                    $this->getHandleName($group, $package),
+                    $package->getUrl('js/' . $group . '.js'),
+                    $dependenciesNames,
+                    null
+                );
             }
         }
     }
@@ -188,14 +192,6 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
     protected function getHandleName($group, AssetPackage $package): string
     {
         return $group . '_wwp_' . $package->getName();
-    }
-
-    /**
-     * @param string $blogUrl
-     */
-    public function setBlogUrl(string $blogUrl): void
-    {
-        $this->blogUrl = $this->wordpressAssetGateway->applyFilters('wwp.enqueuer.blogUrl', $blogUrl, $this);
     }
 
     /**

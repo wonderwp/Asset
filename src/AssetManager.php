@@ -317,7 +317,13 @@ class AssetManager implements SingletonInterface
         return array_keys($requiredGroups);
     }
 
-    public function getDistinctGroups(string $dependencyType) {
+    /**
+     * Find distinct groups and their dependencies in an associative array
+     *
+     * @param string $dependencyType
+     * @return array
+     */
+    public function getDistinctGroupsDependencies(string $dependencyType): array {
         return array_reduce($this->getDependencies($dependencyType), function ($acc, $asset) use ($dependencyType) {
             /** @var Asset $asset */
             if (!isset($acc[$asset->concatGroup])) {

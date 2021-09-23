@@ -11,7 +11,13 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
 {
     public function getEnqueuer(AssetPackages $packages): PackageAssetEnqueuer
     {
-        return new PackageAssetEnqueuer($this->assetManager, new WP_Filesystem_Direct(), $packages, __DIR__, 'http://wdf-base.test', $this->wordpressAssetGatewayMock);
+        return new PackageAssetEnqueuer(
+            $this->assetManager,
+            new WP_Filesystem_Direct(),
+            $packages,
+            __DIR__,
+            $this->wordpressAssetGatewayMock
+        );
     }
 
     public function testRegisterShouldCallWordpressRegisterWithCorrectArgs()
@@ -196,6 +202,7 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
         $legacyPackage = new AssetPackage(
             'legacy',
             new JsonManifestVersionStrategy(__DIR__ . '/fixtures/manifest.json'),
+            ['js', 'css', 'critical'],
             [
                 'baseUrl' => 'http://wdf-base.test',
                 'basePath' => '/fixtures/legacy',
@@ -206,6 +213,7 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
         $modernPackage = new AssetPackage(
             'modern',
             new JsonManifestVersionStrategy(__DIR__ . '/fixtures/manifest-second.json'),
+            ['js', 'css', 'critical'],
             [
                 'baseUrl' => 'http://wdf-base.test',
                 'basePath' => '/fixtures/modern',
@@ -300,9 +308,11 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
         return new AssetPackage(
             'legacy',
             new JsonManifestVersionStrategy(__DIR__ . '/fixtures/manifest.json'),
+            ['js', 'css', 'critical'],
             [
                 'baseUrl' => 'http://wdf-base.test',
                 'basePath' => '/fixtures/legacy',
+                'assetTypes' => ['js', 'css', 'critical']
             ]
         );
     }
@@ -315,9 +325,11 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
         return new AssetPackage(
             'modern',
             new JsonManifestVersionStrategy(__DIR__ . '/fixtures/manifest-second.json'),
+            ['js', 'css', 'critical'],
             [
                 'baseUrl' => 'http://wdf-base.test',
-                'basePath' => '/fixtures/modern'
+                'basePath' => '/fixtures/modern',
+                'assetTypes' => ['js', 'css', 'critical']
             ]
         );
     }

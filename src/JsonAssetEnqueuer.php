@@ -2,6 +2,8 @@
 
 namespace WonderWp\Component\Asset;
 
+use WonderWp\Component\Asset\Exception\MissingJsonManifestException;
+
 class JsonAssetEnqueuer extends AbstractAssetEnqueuer
 {
     /** @var object */
@@ -23,10 +25,19 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
      * @param string $manifestPath
      * @param string $publicPath Path to asset location
      * @param string $blogUrl Website url
+     * @param int $version
      * @param WordpressAssetGateway|null $wordpressAssetGateway
-     * @throws \Exception
+     * @throws MissingJsonManifestException
      */
-    public function __construct(AssetManager $assetManager, $filesystem, string $manifestPath, string $publicPath, string $blogUrl, WordpressAssetGateway $wordpressAssetGateway = null)
+    public function __construct(
+        AssetManager $assetManager,
+        $filesystem,
+        string $manifestPath,
+        string $publicPath,
+        string $blogUrl,
+        int $version,
+        WordpressAssetGateway $wordpressAssetGateway = null
+    )
     {
         parent::__construct($assetManager);
 
@@ -39,7 +50,7 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
         $this->filesystem = $filesystem;
 
         if (!$this->filesystem->exists($manifestPath)) {
-            throw new \Exception('File manifest does not exist');
+            throw new MissingJsonManifestException(sprintf('File manifest does not exist : %s', $manifestPath));
         }
 
         $this->manifest = json_decode($this->filesystem->get_contents($manifestPath));
@@ -47,6 +58,8 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
         $this->publicPath = $publicPath;
 
         $this->blogUrl = $this->wordpressAssetGateway->applyFilters('wwp.enqueuer.blogUrl', $blogUrl, $this);
+
+        $this->version = $version;
 
         $this->register();
     }

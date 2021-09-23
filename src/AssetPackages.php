@@ -28,6 +28,10 @@ class AssetPackages
         return $this->packages;
     }
 
+    /**
+     * @param $assetType
+     * @return AssetPackage[]
+     */
     public function getPackagesBy($assetType)
     {
         return array_filter($this->packages, function($package) use ($assetType) {

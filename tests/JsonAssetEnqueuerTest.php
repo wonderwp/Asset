@@ -21,7 +21,18 @@ class JsonAssetEnqueuerTest extends AbstractEnqueuerTest
         // Hard code blog url
         $blogUrl = 'http://wdf-base.test';
 
-        $this->enqueuer = new JsonAssetEnqueuer($this->assetManager, new WP_Filesystem_Direct(), __DIR__ . '/fixtures/assets.json', $publicPath, $blogUrl, $this->wordpressAssetGatewayMock);
+        $fileVersion = $publicPath . '/fixtures/dist/version.php';
+        $version = $fileVersion ? include($fileVersion) : null;
+
+        $this->enqueuer = new JsonAssetEnqueuer(
+            $this->assetManager,
+            new WP_Filesystem_Direct(),
+            __DIR__ . '/fixtures/assets.json',
+            $publicPath,
+            $blogUrl,
+            $version,
+            $this->wordpressAssetGatewayMock
+        );
     }
 
     public function testRegisterShouldCallWordpressRegisterWithCorrectArgs()
@@ -88,7 +99,10 @@ class JsonAssetEnqueuerTest extends AbstractEnqueuerTest
                 ]
             );
 
-        new JsonAssetEnqueuer($this->assetManager, new WP_Filesystem_Direct(), __DIR__ . '/fixtures/assets.json', __DIR__, 'http://wdf-base.test', $this->wordpressAssetGatewayMock);
+        $fileVersion = __DIR__ . '/fixtures/dist/version.php';
+        $version = $fileVersion ? include($fileVersion) : null;
+
+        new JsonAssetEnqueuer($this->assetManager, new WP_Filesystem_Direct(), __DIR__ . '/fixtures/assets.json', __DIR__, 'http://wdf-base.test', $version, $this->wordpressAssetGatewayMock);
     }
 
     public function testEnqueueStyleShouldCallWordpressEnqueueStyleWithCorrectArgs()
