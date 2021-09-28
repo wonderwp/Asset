@@ -16,6 +16,7 @@ class AssetPackages
      * @var PackageInterface|null
      */
     private $defaultPackage;
+    /** @var PackageInterface[] **/
     private $packages = [];
 
     public function __construct(PackageInterface $defaultPackage = null, iterable $packages = [])
@@ -43,7 +44,7 @@ class AssetPackages
 
     public function getPackages(): array
     {
-        if ($this->defaultPackage !== null) {
+        if (!is_null($this->defaultPackage)) {
             return ['default' => $this->defaultPackage] + $this->packages;
         }
 
@@ -62,8 +63,8 @@ class AssetPackages
      */
     public function getPackage(string $name = null)
     {
-        if (null === $name) {
-            if (null === $this->defaultPackage) {
+        if (is_null($name)) {
+            if (is_null($this->defaultPackage)) {
                 throw new LogicException('There is no default asset package, configure one first.');
             }
 

@@ -20,9 +20,9 @@ class DirectAssetEnqueuer extends AbstractAssetEnqueuer
     {
         parent::__construct($assetManager);
 
-        $this->assetManager->callServices();
         $this->publicPath = $publicPath;
-        if ($wordpressAssetGateway === null) {
+
+        if (is_null($wordpressAssetGateway)) {
             $this->wordpressAssetGateway = new WordpressAssetGateway();
         } else {
             $this->wordpressAssetGateway = $wordpressAssetGateway;
@@ -37,6 +37,8 @@ class DirectAssetEnqueuer extends AbstractAssetEnqueuer
      */
     private function register(): void
     {
+        // Building up complete asset vision thanks to asset services
+        $this->assetManager->callServices();
         $this->registerStyles();
         $this->registerScripts();
     }

@@ -19,6 +19,8 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     /** @var \WP_Filesystem_Base */
     private $filesystem;
 
+    public static $pathPattern = '{assets_dest}/{type}/{group}{version}.{type}';
+
     /**
      * @param AssetManager $assetManager
      * @param \WP_Filesystem_Base $filesystem
@@ -41,7 +43,7 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     {
         parent::__construct($assetManager);
 
-        if ($wordpressAssetGateway === null) {
+        if (is_null($wordpressAssetGateway)) {
             $this->wordpressAssetGateway = new WordpressAssetGateway();
         } else {
             $this->wordpressAssetGateway = $wordpressAssetGateway;
@@ -69,6 +71,7 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
      */
     private function register(): void
     {
+        // Building up complete asset vision thanks to asset services
         $this->assetManager->callServices();
 
         $this->registerStyles();
@@ -140,14 +143,31 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
      */
     protected function computeDependencyArray(string $groupName, string $dependencyType): array
     {
-        switch ($dependencyType) {
-            case 'js':
-                return $this->manifest->jsDependencies->{$groupName} ?? [];
-            case 'css':
-                return $this->manifest->cssDependencies->{$groupName} ?? [];
-            default:
-                return [];
+        $methodName = 'computeDependencyArray' . ucfirst($dependencyType);
+
+        if (method_exists($this, $methodName)) {
+            return call_user_func([$this, $methodName], $groupName);
         }
+
+        return [];
+    }
+
+    /**
+     * @param string $groupName
+     * @return array
+     */
+    protected function computeDependencyArrayJs(string $groupName): array
+    {
+        return $this->manifest->jsDependencies->{$groupName} ?? [];
+    }
+
+    /**
+     * @param string $groupName
+     * @return array
+     */
+    protected function computeDependencyArrayCss(string $groupName): array
+    {
+        return $this->manifest->cssDependencies->{$groupName} ?? [];
     }
 
     /** @inheritdoc */
@@ -171,6 +191,8 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     {
         $asset = $this->assetManager->getDependency('css', $handle);
 
+        // This enqueur works with groups, not individual files,
+        // hence retrieving the group from the file first, then enqueuing the group file.
         if ($asset) {
             $this->enqueueStyleGroup($asset->concatGroup);
         }
@@ -183,6 +205,8 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     {
         $asset = $this->assetManager->getDependency('js', $handle);
 
+        // This enqueur works with groups, not individual files,
+        // hence retrieving the group from the file first, then enqueuing the group file.
         if ($asset) {
             $this->enqueueScriptGroup($asset->concatGroup);
         }
@@ -195,6 +219,8 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     {
         $asset = $this->assetManager->getDependency('css', $handle);
 
+        // This enqueur works with groups, not individual files,
+        // hence retrieving the group from the file first, then inlining the group file.
         if ($asset) {
             return $this->inlineStyleGroup($asset->concatGroup);
         }
@@ -221,6 +247,8 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     {
         $asset = $this->assetManager->getDependency('js', $handle);
 
+        // This enqueur works with groups, not individual files,
+        // hence retrieving the group from the file first, then inlining the group file.
         if ($asset) {
             return $this->inlineScriptGroup($asset->concatGroup);
         }
@@ -280,8 +308,6 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
      */
     protected function getSrcFrom(string $type, string $group): string
     {
-        $pattern = '{assets_dest}/{type}/{group}{version}.{type}';
-
         $search = [
             '{assets_dest}',
             '{type}',
@@ -296,7 +322,7 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
             $this->version
         ];
 
-        return str_replace($search, $replace, $pattern);
+        return str_replace($search, $replace, static::$pathPattern);
     }
 
     /**

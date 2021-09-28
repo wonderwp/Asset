@@ -26,7 +26,7 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
         parent::__construct($assetManager);
 
 
-        if ($wordpressAssetGateway === null) {
+        if (is_null($wordpressAssetGateway)) {
             $this->wordpressAssetGateway = new WordpressAssetGateway();
         } else {
             $this->wordpressAssetGateway = $wordpressAssetGateway;
@@ -40,6 +40,7 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
 
     public function register()
     {
+        // Building up complete asset vision thanks to asset services
         $this->assetManager->callServices();
 
         $this->registerStyles();
@@ -149,6 +150,8 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
     {
         $asset = $this->assetManager->getDependency('css', $handle);
 
+        // This enqueur works with groups, not individual files,
+        // hence retrieving the group from the file first, then enqueuing the group file.
         if ($asset) {
             $this->enqueueStyleGroup($asset->concatGroup);
         }
@@ -161,6 +164,8 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
     {
         $asset = $this->assetManager->getDependency('js', $handle);
 
+        // This enqueur works with groups, not individual files,
+        // hence retrieving the group from the file first, then enqueuing the group file.
         if ($asset) {
             $this->enqueueScriptGroup($asset->concatGroup);
         }
@@ -173,6 +178,8 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
     {
         $asset = $this->assetManager->getDependency('css', $handle);
 
+        // This enqueur works with groups, not individual files,
+        // hence retrieving the group from the file first, then inlining the group file.
         if ($asset) {
             return $this->inlineStyleGroup($asset->concatGroup);
         }
@@ -213,6 +220,8 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
     {
         $asset = $this->assetManager->getDependency('js', $handle);
 
+        // This enqueur works with groups, not individual files,
+        // hence retrieving the group from the file first, then inlining the group file.
         if ($asset) {
             return $this->inlineScriptGroup($asset->concatGroup);
         }
