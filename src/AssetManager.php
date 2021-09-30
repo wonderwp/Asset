@@ -284,7 +284,7 @@ class AssetManager implements SingletonInterface
         return $return;
     }
 
-    public function getGroupDepencyGroups($group, $type = 'js')
+    public function getGroupDependencyGroups($group, $type = 'js')
     {
         $requiredDepsHandles = [];
         $deps                = $this->getDependenciesFromGroup($group, $type);
@@ -315,5 +315,22 @@ class AssetManager implements SingletonInterface
         }
 
         return array_keys($requiredGroups);
+    }
+
+    /**
+     * Find distinct groups and their dependencies in an associative array
+     *
+     * @param string $dependencyType
+     * @return array
+     */
+    public function getDistinctGroupsDependencies(string $dependencyType): array {
+        return array_reduce($this->getDependencies($dependencyType), function ($acc, $asset) use ($dependencyType) {
+            /** @var Asset $asset */
+            if (!isset($acc[$asset->concatGroup])) {
+                $acc[$asset->concatGroup] = $this->getGroupDependencyGroups($asset->concatGroup, $dependencyType);
+            }
+
+            return $acc;
+        }, []);
     }
 }

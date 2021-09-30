@@ -1,0 +1,49 @@
+{
+  "site": {
+    "id": 1,
+    "title": "WonderWp Demo Site",
+    "url": "http:\/\/wdf-base.test",
+    "assets_src": "/",
+    "assets_dest": "/fixtures/dist",
+    "prefix": "",
+    "env": "development"
+  },
+  "css": {
+    "styleguide": [
+      "/fixtures/css/first.css"
+    ],
+    "critical": [
+      "/fixtures/css/first.css"
+    ],
+    "admin": [
+      "/fixtures/css/first.css"
+    ]
+  },
+  "js": {
+    "styleguide": [
+      "/fixtures/js/first.js"
+    ],
+    "admin": [
+      "/fixtures/js/first.js"
+    ],
+    "plugins": [
+      "/fixtures/js/first.js"
+    ],
+    "critical": [
+      "/fixtures/js/first.js"
+    ],
+    "init": [
+      "/fixtures/js/first.js"
+    ]
+  },
+  "jsDependencies": {
+    "styleguide": [],
+    "map": [],
+    "admin": [],
+    "plugins": [
+      "styleguide"
+    ],
+    "critical": [],
+    "init": []
+  }
+}

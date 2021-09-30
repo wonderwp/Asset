@@ -41,15 +41,19 @@ class JsonAssetExporter extends AbstractAssetExporter
         $cssFiles        = $assetsManager->getFlatDependencies($handlesCss, 'css');
 
         $cssFilesJSON = [];
+        $cssGroupDependencies = [];
         foreach ($cssFiles as $groupName => $groupFiles) {
+            $cssGroupDependencies[$groupName] = $assetsManager->getGroupDependencyGroups($groupName, 'css');
             $cssFilesJSON[$groupName] = [];
 
             foreach ($groupFiles as $css) {
-                $css->src                   = str_replace($blogUrl, '', $css->src);
+                $css->src = str_replace($blogUrl, '', $css->src);
                 $cssFilesJSON[$groupName][] = $assetsPrefix . $css->src;
+
             }
         }
         $json['css'] = $cssFilesJSON;
+        $json['cssDependencies'] = $cssGroupDependencies;
 
         /**
          * Export JS files
@@ -61,7 +65,7 @@ class JsonAssetExporter extends AbstractAssetExporter
         $jsFilesJSON         = [];
         $jsGroupDependencies = [];
         foreach ($jsFiles as $groupName => $groupFiles) {
-            $jsGroupDependencies[$groupName] = $assetsManager->getGroupDepencyGroups($groupName);
+            $jsGroupDependencies[$groupName] = $assetsManager->getGroupDependencyGroups($groupName);
             $jsFilesJSON[$groupName]         = [];
 
             foreach ($groupFiles as $js) {
@@ -82,7 +86,7 @@ class JsonAssetExporter extends AbstractAssetExporter
         $filesystem   = $this->container->offsetGet('wwp.fileSystem');
         $written      = $filesystem->put_contents(
             $manifestPath,
-            json_encode($json),
+            json_encode($json, JSON_PRETTY_PRINT),
             FS_CHMOD_FILE // predefined mode settings for WP files
         );
 
