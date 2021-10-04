@@ -173,6 +173,16 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritdoc */
     public function enqueueStyleGroup(string $groupName)
     {
+        $groupName = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.enqueueStyleGroup.groupName',
+            $groupName,
+            $this
+        );
+
+        if (empty($groupName)) {
+            return $this;
+        }
+
         $this->wordpressAssetGateway->enqueueStyle($groupName);
 
         return $this;
@@ -181,6 +191,16 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritdoc */
     public function enqueueScriptGroup(string $groupName)
     {
+        $groupName = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.enqueueScriptGroup.groupName',
+            $groupName,
+            $this
+        );
+
+        if (empty($groupName)) {
+            return $this;
+        }
+
         $this->wordpressAssetGateway->enqueueScript($groupName);
 
         return $this;
@@ -189,6 +209,16 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritDoc */
     public function enqueueStyle(string $handle)
     {
+        $handle = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.enqueueStyle.handle',
+            $handle,
+            $this
+        );
+
+        if (empty($handle)) {
+            return $this;
+        }
+
         $asset = $this->assetManager->getDependency('css', $handle);
 
         // This enqueur works with groups, not individual files,
@@ -203,6 +233,16 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritDoc */
     public function enqueueScript(string $handle)
     {
+        $handle = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.enqueueScript.handle',
+            $handle,
+            $this
+        );
+
+        if (empty($handle)) {
+            return $this;
+        }
+
         $asset = $this->assetManager->getDependency('js', $handle);
 
         // This enqueur works with groups, not individual files,
@@ -217,6 +257,16 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritDoc */
     public function inlineStyle(string $handle)
     {
+        $handle = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.inlineStyle.handle',
+            $handle,
+            $this
+        );
+
+        if (empty($handle)) {
+            return '';
+        }
+
         $asset = $this->assetManager->getDependency('css', $handle);
 
         // This enqueur works with groups, not individual files,
@@ -231,6 +281,16 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritDoc */
     public function inlineStyleGroup(string $groupName)
     {
+        $groupName = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.inlineStyleGroup.groupName',
+            $groupName,
+            $this
+        );
+
+        if (empty($groupName)) {
+            return '';
+        }
+
         if ($this->doesPropertyExistInManifest('css', $groupName)) {
             $src = $this->getPathFrom('css', $groupName);
 
@@ -245,6 +305,16 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritDoc */
     public function inlineScript(string $handle): string
     {
+        $handle = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.inlineScript.handle',
+            $handle,
+            $this
+        );
+
+        if (empty($handle)) {
+            return '';
+        }
+
         $asset = $this->assetManager->getDependency('js', $handle);
 
         // This enqueur works with groups, not individual files,
@@ -259,6 +329,16 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritDoc */
     public function inlineScriptGroup(string $groupName): string
     {
+        $groupName = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.inlineScriptGroup.groupName',
+            $groupName,
+            $this
+        );
+
+        if (empty($groupName)) {
+            return '';
+        }
+
         if ($this->doesPropertyExistInManifest('js', $groupName)) {
 
             $src = $this->getPathFrom('js', $groupName);

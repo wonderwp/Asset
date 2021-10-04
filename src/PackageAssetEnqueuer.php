@@ -114,6 +114,16 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritDoc */
     public function enqueueStyleGroup(string $groupName)
     {
+        $groupName = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.enqueueStyleGroup.groupName',
+            $groupName,
+            $this
+        );
+
+        if (empty($groupName)) {
+            return $this;
+        }
+
         $packages = $this->wordpressAssetGateway->applyFilters(
             'wwp.enqueuer.enqueueStyleGroup.packages',
             $this->packages->getPackages(),
@@ -131,6 +141,16 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritDoc */
     public function enqueueScriptGroup(string $groupName)
     {
+        $groupName = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.enqueueScriptGroup.groupName',
+            $groupName,
+            $this
+        );
+
+        if (empty($groupName)) {
+            return $this;
+        }
+
         $packages = $this->wordpressAssetGateway->applyFilters(
             'wwp.enqueuer.enqueueScriptGroup.packages',
             $this->packages->getPackages(),
@@ -148,6 +168,16 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritDoc */
     public function enqueueStyle(string $handle)
     {
+        $handle = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.enqueueStyle.handle',
+            $handle,
+            $this
+        );
+
+        if (empty($handle)) {
+            return $this;
+        }
+
         $asset = $this->assetManager->getDependency('css', $handle);
 
         // This enqueur works with groups, not individual files,
@@ -162,6 +192,16 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritDoc */
     public function enqueueScript(string $handle)
     {
+        $handle = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.enqueueScript.handle',
+            $handle,
+            $this
+        );
+
+        if (empty($handle)) {
+            return $this;
+        }
+
         $asset = $this->assetManager->getDependency('js', $handle);
 
         // This enqueur works with groups, not individual files,
@@ -176,6 +216,16 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritDoc */
     public function inlineStyle(string $handle)
     {
+        $handle = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.inlineStyle.handle',
+            $handle,
+            $this
+        );
+
+        if (empty($handle)) {
+            return '';
+        }
+
         $asset = $this->assetManager->getDependency('css', $handle);
 
         // This enqueur works with groups, not individual files,
@@ -190,6 +240,16 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritDoc */
     public function inlineStyleGroup(string $groupName)
     {
+        $groupName = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.inlineStyleGroup.groupName',
+            $groupName,
+            $this
+        );
+
+        if (empty($groupName)) {
+            return '';
+        }
+
         $packages = $this->wordpressAssetGateway->applyFilters(
             'wwp.enqueuer.inlineStyleGroup.packages',
             $this->packages->getPackages(),
@@ -218,6 +278,16 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritDoc */
     public function inlineScript(string $handle): string
     {
+        $handle = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.inlineScript.handle',
+            $handle,
+            $this
+        );
+
+        if (empty($handle)) {
+            return '';
+        }
+
         $asset = $this->assetManager->getDependency('js', $handle);
 
         // This enqueur works with groups, not individual files,
@@ -232,6 +302,16 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
 
     public function inlineScriptGroup(string $groupName): string
     {
+        $groupName = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.inlineScriptGroup.groupName',
+            $groupName,
+            $this
+        );
+
+        if (empty($groupName)) {
+            return '';
+        }
+
         $packages = $this->wordpressAssetGateway->applyFilters(
             'wwp.enqueuer.inlineScriptGroup.packages',
             $this->packages->getPackages(),

@@ -88,6 +88,16 @@ class DirectAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritdoc */
     public function enqueueStyleGroup(string $groupName)
     {
+        $groupName = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.enqueueStyleGroup.groupName',
+            $groupName,
+            $this
+        );
+
+        if (empty($groupName)) {
+            return $this;
+        }
+
         $toEnqueue = $this->assetManager->getDependenciesFromGroup($groupName, 'css');
 
         foreach ($toEnqueue as $dep) {
@@ -100,6 +110,16 @@ class DirectAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritdoc */
     public function enqueueScriptGroup(string $groupName)
     {
+        $groupName = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.enqueueScriptGroup.groupName',
+            $groupName,
+            $this
+        );
+
+        if (empty($groupName)) {
+            return $this;
+        }
+
         $toEnqueue = $this->assetManager->getDependenciesFromGroup($groupName, 'js');
 
         foreach ($toEnqueue as $dep) {
@@ -112,6 +132,16 @@ class DirectAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritdoc */
     public function enqueueStyle(string $handle)
     {
+        $handle = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.enqueueStyle.handle',
+            $handle,
+            $this
+        );
+
+        if (empty($handle)) {
+            return $this;
+        }
+
         $this->wordpressAssetGateway->enqueueStyle($handle);
 
         return $this;
@@ -120,6 +150,16 @@ class DirectAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritdoc */
     public function enqueueScript(string $handle)
     {
+        $handle = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.enqueueScript.handle',
+            $handle,
+            $this
+        );
+
+        if (empty($handle)) {
+            return $this;
+        }
+
         $this->wordpressAssetGateway->enqueueScript($handle);
 
         return $this;
@@ -128,18 +168,48 @@ class DirectAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritdoc */
     public function inlineStyle(string $handle): string
     {
+        $handle = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.inlineStyle.handle',
+            $handle,
+            $this
+        );
+
+        if (empty($handle)) {
+            return '';
+        }
+
         return $this->inline($handle, 'css');
     }
 
     /** @inheritdoc */
     public function inlineScript(string $handle): string
     {
+        $handle = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.inlineScript.handle',
+            $handle,
+            $this
+        );
+
+        if (empty($handle)) {
+            return '';
+        }
+
         return $this->inline($handle, 'js');
     }
 
     /** @inheritdoc */
     public function inlineStyleGroup(string $groupName): string
     {
+        $groupName = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.inlineStyleGroup.groupName',
+            $groupName,
+            $this
+        );
+
+        if (empty($groupName)) {
+            return '';
+        }
+
         $toInline = $this->assetManager->getDependenciesFromGroup($groupName, 'css');
         $inline = '';
 
@@ -153,6 +223,16 @@ class DirectAssetEnqueuer extends AbstractAssetEnqueuer
     /** @inheritdoc */
     public function inlineScriptGroup(string $groupName): string
     {
+        $groupName = $this->wordpressAssetGateway->applyFilters(
+            'wwp.enqueuer.inlineScriptGroup.groupName',
+            $groupName,
+            $this
+        );
+
+        if (empty($groupName)) {
+            return '';
+        }
+
         $toInline = $this->assetManager->getDependenciesFromGroup($groupName, 'js');
         $inline = '';
 
