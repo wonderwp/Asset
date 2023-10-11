@@ -37,4 +37,10 @@ class Asset extends _WP_Dependency
 
         return $this;
     }
+
+    public function setConcatGroup(string $concatGroup): Asset
+    {
+        $this->concatGroup = $concatGroup;
+        return $this;
+    }
 }
