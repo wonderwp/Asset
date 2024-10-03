@@ -17,8 +17,8 @@
   ],
   "require": {
     "php": ">=8.0",
-    "wonderwp/logging": "^1.0",
-    "wonderwp/service": "^1.0",
+    "wonderwp/logging": "dev-feature/php_8",
+    "wonderwp/service": "dev-feature/php_8",
     "symfony/asset": "5.3.4"
   },
   "autoload": {
@@ -33,7 +33,7 @@
   "minimum-stability": "dev",
   "require-dev": {
     "phpunit/phpunit": "9.5.7",
-    "johnpbloch/wordpress": "^5.8",
-    "wonderwp/functions": "dev-develop"
+    "johnpbloch/wordpress": "^6.0",
+    "wonderwp/functions": "dev-dev-feature/php_8"
   }
 }
