@@ -16,7 +16,7 @@
     }
   ],
   "require": {
-    "php": ">=7.1",
+    "php": ">=8.0",
     "wonderwp/logging": "^1.0",
     "wonderwp/service": "^1.0",
     "symfony/asset": "5.3.4"
