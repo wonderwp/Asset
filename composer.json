@@ -35,5 +35,11 @@
     "phpunit/phpunit": "~9.6.33",
     "johnpbloch/wordpress": "^6.0",
     "wonderwp/functions": "dev-dev-feature/php_8"
+  },
+  "config": {
+    "allow-plugins": {
+      "johnpbloch/wordpress-core-installer": true,
+      "composer/installers": true
+    }
   }
 }
