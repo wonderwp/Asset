@@ -42,7 +42,7 @@ class JsonAssetEnqueuerTest extends AbstractEnqueuerTest
         $this->wordpressAssetGatewayMock
             ->expects($this->exactly(3))
             ->method('registerStyle')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     $this->equalTo('styleguide'),
                     $this->equalTo('http://wdf-base.test/fixtures/dist/css/styleguide1629206406688.css'),
@@ -61,12 +61,12 @@ class JsonAssetEnqueuerTest extends AbstractEnqueuerTest
                     $this->equalTo([]),
                     $this->equalTo(null),
                 ]
-            );
+            ]));
 
         $this->wordpressAssetGatewayMock
             ->expects($this->exactly(5))
             ->method('registerScript')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     $this->equalTo('styleguide'),
                     $this->equalTo('http://wdf-base.test/fixtures/dist/js/styleguide1629206406688.js'),
@@ -97,7 +97,7 @@ class JsonAssetEnqueuerTest extends AbstractEnqueuerTest
                     $this->equalTo([]),
                     $this->equalTo(null),
                 ]
-            );
+            ]));
 
         $fileVersion = __DIR__ . '/fixtures/dist/version.php';
         $version = $fileVersion ? include($fileVersion) : null;
@@ -110,14 +110,14 @@ class JsonAssetEnqueuerTest extends AbstractEnqueuerTest
         $this->wordpressAssetGatewayMock
             ->expects($this->exactly(2))
             ->method('enqueueStyle')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     'styleguide'
                 ],
                 [
                     'admin'
                 ]
-            );
+            ]));
 
         $this->enqueuer->enqueueStyleGroups(['styleguide', 'admin']);
     }
@@ -137,14 +137,14 @@ class JsonAssetEnqueuerTest extends AbstractEnqueuerTest
         $this->wordpressAssetGatewayMock
             ->expects($this->exactly(2))
             ->method('enqueueScript')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     'styleguide'
                 ],
                 [
                     'admin'
                 ]
-            );
+            ]));
 
         $this->enqueuer->enqueueScriptGroups(['styleguide', 'admin']);
     }
@@ -164,14 +164,14 @@ class JsonAssetEnqueuerTest extends AbstractEnqueuerTest
         $this->wordpressAssetGatewayMock
             ->expects($this->exactly(2))
             ->method('enqueueStyle')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     'admin'
                 ],
                 [
                     'styleguide'
                 ]
-            );
+            ]));
 
         $this->enqueuer->enqueueStyles(['first-css', 'second-css']);
     }
@@ -191,14 +191,14 @@ class JsonAssetEnqueuerTest extends AbstractEnqueuerTest
         $this->wordpressAssetGatewayMock
             ->expects($this->exactly(2))
             ->method('enqueueScript')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     'admin'
                 ],
                 [
                     'styleguide'
                 ]
-            );
+            ]));
 
         $this->enqueuer->enqueueScripts(['first-js', 'second-js']);
     }

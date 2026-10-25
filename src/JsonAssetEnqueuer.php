@@ -38,7 +38,7 @@ class JsonAssetEnqueuer extends AbstractAssetEnqueuer
         string $publicPath,
         string $blogUrl,
         $version,
-        WordpressAssetGateway $wordpressAssetGateway = null
+        ?WordpressAssetGateway $wordpressAssetGateway = null
     )
     {
         parent::__construct($assetManager);

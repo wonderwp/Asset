@@ -14,7 +14,7 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
         $this->wordpressAssetGatewayMock
             ->expects($this->exactly(4))
             ->method('registerStyle')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     $this->equalTo('wwp_default_admin'),
                     $this->equalTo('http://wdf-base.test/fixtures/legacy/css/admin.3401c219.css'),
@@ -39,12 +39,12 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
                     $this->equalTo([]),
                     $this->equalTo(null),
                 ]
-            );
+            ]));
 
         $this->wordpressAssetGatewayMock
             ->expects($this->exactly(4))
             ->method('registerScript')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     $this->equalTo('wwp_default_admin'),
                     $this->equalTo('http://wdf-base.test/fixtures/legacy/js/admin.8f300f60.js'),
@@ -81,7 +81,7 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
                     $this->equalTo([]),
                     $this->equalTo(null),
                 ]
-            );
+            ]));
 
         $legacyPackage = $this->getLegacyPackage();
 
@@ -126,14 +126,14 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
 
         $this->wordpressAssetGatewayMock->expects($this->exactly(2))
             ->method('enqueueStyle')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     $this->equalTo('wwp_default_styleguide')
                 ],
                 [
                     $this->equalTo('wwp_default_admin')
                 ]
-            );
+            ]));
 
         $stub->enqueueStyleGroups(['styleguide', 'admin']);
     }
@@ -155,14 +155,14 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
 
         $this->wordpressAssetGatewayMock->expects($this->exactly(2))
             ->method('enqueueScript')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     $this->equalTo('wwp_default_vendor')
                 ],
                 [
                     $this->equalTo('wwp_default_styleguide')
                 ]
-            );
+            ]));
 
         $stub->enqueueScriptGroups(['vendor', 'styleguide']);
     }
@@ -186,14 +186,14 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
 
         $this->wordpressAssetGatewayMock->expects($this->exactly(2))
             ->method('enqueueStyle')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     $this->equalTo('wwp_default_admin')
                 ],
                 [
                     $this->equalTo('wwp_default_styleguide')
                 ]
-            );
+            ]));
 
         $stub->enqueueStyles(['first-css', 'second-css']);
     }
@@ -215,14 +215,14 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
 
         $this->wordpressAssetGatewayMock->expects($this->exactly(2))
             ->method('enqueueScript')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     $this->equalTo('wwp_default_admin')
                 ],
                 [
                     $this->equalTo('wwp_default_styleguide')
                 ]
-            );
+            ]));
 
         $stub->enqueueScripts(['first-js', 'second-js']);
     }
@@ -320,14 +320,14 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
 
         $this->wordpressAssetGatewayMock->expects($this->exactly(2))
             ->method('enqueueStyle')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     $this->equalTo('wwp_default_styleguide')
                 ],
                 [
                     $this->equalTo('wwp_modern_styleguide')
                 ]
-            );
+            ]));
 
         $stub->enqueueStyleGroups(['styleguide']);
     }
@@ -338,14 +338,14 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
 
         $this->wordpressAssetGatewayMock->expects($this->exactly(2))
             ->method('enqueueStyle')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     $this->equalTo('wwp_default_styleguide')
                 ],
                 [
                     $this->equalTo('wwp_modern_styleguide')
                 ]
-            );
+            ]));
 
         $stub->enqueueStyleGroup('styleguide');
     }
@@ -356,7 +356,7 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
 
         $this->wordpressAssetGatewayMock->expects($this->exactly(4))
             ->method('enqueueScript')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     $this->equalTo('wwp_default_vendor')
                 ],
@@ -369,7 +369,7 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
                 [
                     $this->equalTo('wwp_modern_styleguide')
                 ]
-            );
+            ]));
 
         $stub->enqueueScriptGroups(['vendor', 'styleguide']);
     }
@@ -380,14 +380,14 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
 
         $this->wordpressAssetGatewayMock->expects($this->exactly(2))
             ->method('enqueueScript')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     $this->equalTo('wwp_default_vendor')
                 ],
                 [
                     $this->equalTo('wwp_modern_vendor')
                 ]
-            );
+            ]));
 
         $stub->enqueueScriptGroup('vendor');
     }
@@ -398,7 +398,7 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
 
         $this->wordpressAssetGatewayMock->expects($this->exactly(4))
             ->method('enqueueStyle')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     $this->equalTo('wwp_default_admin')
                 ],
@@ -411,7 +411,7 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
                 [
                     $this->equalTo('wwp_modern_styleguide')
                 ]
-            );
+            ]));
 
         $stub->enqueueStyles(['first-css', 'second-css']);
     }
@@ -422,14 +422,14 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
 
         $this->wordpressAssetGatewayMock->expects($this->exactly(2))
             ->method('enqueueStyle')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     $this->equalTo('wwp_default_admin')
                 ],
                 [
                     $this->equalTo('wwp_modern_admin')
                 ]
-            );
+            ]));
 
         $stub->enqueueStyle('first-css');
     }
@@ -440,7 +440,7 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
 
         $this->wordpressAssetGatewayMock->expects($this->exactly(4))
             ->method('enqueueScript')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     $this->equalTo('wwp_default_admin')
                 ],
@@ -453,7 +453,7 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
                 [
                     $this->equalTo('wwp_modern_styleguide')
                 ]
-            );
+            ]));
 
         $stub->enqueueScripts(['first-js', 'second-js']);
     }
@@ -464,14 +464,14 @@ class PackageAssetEnqueuerTest extends AbstractEnqueuerTest
 
         $this->wordpressAssetGatewayMock->expects($this->exactly(2))
             ->method('enqueueScript')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     $this->equalTo('wwp_default_admin')
                 ],
                 [
                     $this->equalTo('wwp_modern_admin')
                 ]
-            );
+            ]));
 
         $stub->enqueueScript('first-js');
     }

@@ -19,7 +19,7 @@ class AssetPackages
     /** @var PackageInterface[] **/
     private $packages = [];
 
-    public function __construct(PackageInterface $defaultPackage = null, iterable $packages = [])
+    public function __construct(?PackageInterface $defaultPackage = null, iterable $packages = [])
     {
         $this->defaultPackage = $defaultPackage;
 
@@ -61,7 +61,7 @@ class AssetPackages
      * @throws InvalidArgumentException If there is no package by that name
      * @throws LogicException           If no default package is defined
      */
-    public function getPackage(string $name = null)
+    public function getPackage(?string $name = null)
     {
         if (is_null($name)) {
             if (is_null($this->defaultPackage)) {
@@ -86,7 +86,7 @@ class AssetPackages
      *
      * @return string The current version
      */
-    public function getVersion(string $path, string $packageName = null)
+    public function getVersion(string $path, ?string $packageName = null)
     {
         return $this->getPackage($packageName)->getVersion($path);
     }
@@ -101,7 +101,7 @@ class AssetPackages
      *
      * @return string A public path which takes into account the base path and URL path
      */
-    public function getUrl(string $path, string $packageName = null)
+    public function getUrl(string $path, ?string $packageName = null)
     {
         return $this->getPackage($packageName)->getUrl($path);
     }
