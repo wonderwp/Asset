@@ -40,6 +40,9 @@
     "johnpbloch/wordpress": "^7.0",
     "wonderwp/functions": "dev-feature/php_8"
   },
+  "scripts": {
+    "test": "phpunit --configuration phpunit.xml.dist"
+  },
   "config": {
     "allow-plugins": {
       "johnpbloch/wordpress-core-installer": true,
