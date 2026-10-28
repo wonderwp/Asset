@@ -28,7 +28,7 @@ class DirectAssetEnqueuerTest extends AbstractEnqueuerTest
         $this->wordpressAssetGatewayMock
             ->expects($this->exactly(3))
             ->method('registerStyle')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     $this->equalTo('first-css'),
                     $this->equalTo('/fixtures/css/first.css'),
@@ -47,12 +47,12 @@ class DirectAssetEnqueuerTest extends AbstractEnqueuerTest
                     $this->equalTo([]),
                     $this->equalTo(null),
                 ]
-            );
+            ]));
 
         $this->wordpressAssetGatewayMock
             ->expects($this->exactly(3))
             ->method('registerScript')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     $this->equalTo('first-js'),
                     $this->equalTo('/fixtures/js/first.js'),
@@ -71,7 +71,7 @@ class DirectAssetEnqueuerTest extends AbstractEnqueuerTest
                     $this->equalTo([]),
                     $this->equalTo(null),
                 ]
-            );
+            ]));
 
         new DirectAssetEnqueuer($this->assetManager, new WP_Filesystem_Direct(), __DIR__, $this->wordpressAssetGatewayMock);
     }
@@ -81,7 +81,7 @@ class DirectAssetEnqueuerTest extends AbstractEnqueuerTest
         $this->wordpressAssetGatewayMock
             ->expects($this->exactly(3))
             ->method('enqueueStyle')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     'second-css'
                 ],
@@ -91,7 +91,7 @@ class DirectAssetEnqueuerTest extends AbstractEnqueuerTest
                 [
                     'first-css'
                 ]
-            );
+            ]));
 
         $this->enqueuer->enqueueStyleGroups(['styleguide', 'admin']);
     }
@@ -111,14 +111,14 @@ class DirectAssetEnqueuerTest extends AbstractEnqueuerTest
         $this->wordpressAssetGatewayMock
             ->expects($this->exactly(2))
             ->method('enqueueStyle')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     'second-css'
                 ],
                 [
                     'third-css'
                 ]
-            );
+            ]));
 
         $this->enqueuer->enqueueStyleGroup('styleguide');
     }
@@ -128,7 +128,7 @@ class DirectAssetEnqueuerTest extends AbstractEnqueuerTest
         $this->wordpressAssetGatewayMock
             ->expects($this->exactly(3))
             ->method('enqueueScript')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     'second-js'
                 ],
@@ -138,7 +138,7 @@ class DirectAssetEnqueuerTest extends AbstractEnqueuerTest
                 [
                     'first-js'
                 ]
-            );
+            ]));
 
         $this->enqueuer->enqueueScriptGroups(['styleguide', 'admin']);
     }
@@ -158,14 +158,14 @@ class DirectAssetEnqueuerTest extends AbstractEnqueuerTest
         $this->wordpressAssetGatewayMock
             ->expects($this->exactly(2))
             ->method('enqueueScript')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     'second-js'
                 ],
                 [
                     'third-js'
                 ]
-            );
+            ]));
 
         $this->enqueuer->enqueueScriptGroup('styleguide');
     }
@@ -175,14 +175,14 @@ class DirectAssetEnqueuerTest extends AbstractEnqueuerTest
         $this->wordpressAssetGatewayMock
             ->expects($this->exactly(2))
             ->method('enqueueStyle')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     'first-css'
                 ],
                 [
                     'second-css'
                 ]
-            );
+            ]));
 
         $this->enqueuer->enqueueStyles(['first-css', 'second-css']);
     }
@@ -202,14 +202,14 @@ class DirectAssetEnqueuerTest extends AbstractEnqueuerTest
         $this->wordpressAssetGatewayMock
             ->expects($this->exactly(2))
             ->method('enqueueScript')
-            ->withConsecutive(
+            ->willReturnCallback($this->consecutiveCallback([
                 [
                     'first-js'
                 ],
                 [
                     'second-js'
                 ]
-            );
+            ]));
 
         $this->enqueuer->enqueueScripts(['first-js', 'second-js']);
     }

@@ -6,3 +6,20 @@ A WonderWp package allowing you to work with assets. It helps you declare them, 
 
 - Declaring assets (the register part) works with Assets Services. Documentation about Assets Services can be found at [http://wonderwp.net/Creating_a_plugin/Services/Assets_service.html](http://wonderwp.net/Creating_a_plugin/Services/Assets_service.html).
 - Then, using your assets within your theme (the enqueue part) works with Assets Enqueuers. Documentation about enqueuers can be found at [http://wonderwp.net/Framewok_components/Assets/index.html](http://wonderwp.net/Framewok_components/Assets/index.html)
+- Testing strategy: [wonderwp/docs/testing.md](https://github.com/wonderwp/wonderwp/blob/chore/deps-max/docs/testing.md)
+
+## Testing
+
+### Unit (CI)
+
+```bash
+composer install
+composer test
+```
+
+### Integration (any WordPress host)
+
+```bash
+wp eval-file vendor/wonderwp/asset/tests/Integration/smoke-autoload.php
+```
+

@@ -21,7 +21,7 @@ class PackageAssetEnqueuer extends AbstractAssetEnqueuer
      * @param string $publicPath
      * @param WordpressAssetGateway|null $wordpressAssetGateway
      */
-    public function __construct(AssetManager $assetManager, $filesystem, AssetPackages $packages, string $publicPath, WordpressAssetGateway $wordpressAssetGateway = null)
+    public function __construct(AssetManager $assetManager, $filesystem, AssetPackages $packages, string $publicPath, ?WordpressAssetGateway $wordpressAssetGateway = null)
     {
         parent::__construct($assetManager);
 

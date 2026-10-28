@@ -16,7 +16,7 @@ class DirectAssetEnqueuer extends AbstractAssetEnqueuer
      * @param WordpressAssetGateway|null $wordpressAssetGateway
      * @param \WP_Filesystem_Base $filesystem
      */
-    public function __construct(AssetManager $assetManager, $filesystem, string $publicPath, WordpressAssetGateway $wordpressAssetGateway = null)
+    public function __construct(AssetManager $assetManager, $filesystem, string $publicPath, ?WordpressAssetGateway $wordpressAssetGateway = null)
     {
         parent::__construct($assetManager);
 
