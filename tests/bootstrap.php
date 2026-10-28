@@ -29,11 +29,17 @@ $wpDependencyCandidates = [
     dirname(__DIR__, 4) . '/web/wp/wp-includes/class-wp-dependency.php',
 ];
 
+$wpDependencyLoaded = false;
 foreach ($wpDependencyCandidates as $wpDependency) {
     if (is_file($wpDependency)) {
         require_once $wpDependency;
+        $wpDependencyLoaded = true;
         break;
     }
+}
+
+if (!$wpDependencyLoaded) {
+    require_once __DIR__ . '/stub-wp-dependency.php';
 }
 
 require_once __DIR__ . '/stub.php';
