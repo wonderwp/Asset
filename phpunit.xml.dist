@@ -8,7 +8,7 @@
          beStrictAboutOutputDuringTests="false">
     <testsuites>
         <testsuite name="WonderWp Asset Unit">
-            <file>./tests/AbstractEnqueuerTest.php</file>
+            <!-- AbstractEnqueuerTest is a base class, not a runnable suite -->
             <file>./tests/DirectAssetEnqueuerTest.php</file>
             <file>./tests/JsonAssetEnqueuerTest.php</file>
             <file>./tests/PackageAssetEnqueuerTest.php</file>
